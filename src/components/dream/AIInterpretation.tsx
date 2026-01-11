@@ -474,7 +474,15 @@ export function AIInterpretation({
     }
   }, [guidanceContent, guidanceLoading]);
 
-  // Export handler - captures image and shares/downloads
+  // Download helper (same as bazi-app)
+  const downloadImage = (dataUrl: string, name: string) => {
+    const link = document.createElement('a');
+    link.download = name;
+    link.href = dataUrl;
+    link.click();
+  };
+
+  // Export handler - captures image and shares/downloads (same pattern as bazi-app)
   const handleExport = async () => {
     if (isExporting || !exportAreaRef.current) return;
     setIsExporting(true);
@@ -482,75 +490,50 @@ export function AIInterpretation({
     try {
       const element = exportAreaRef.current;
 
-      // Hide elements that shouldn't appear in export
-      const hideElements = element.querySelectorAll('.export-hide');
-      hideElements.forEach(el => {
-        (el as HTMLElement).style.display = 'none';
-      });
+      // Hide export-hide elements and show watermark
+      const exportHideElements = element.querySelectorAll('.export-hide');
+      const watermarkElement = element.querySelector('.watermark');
 
-      // Show watermark
-      const watermarks = element.querySelectorAll('.watermark');
-      watermarks.forEach(el => {
-        el.classList.add('watermark-visible');
-      });
+      exportHideElements.forEach(el => ((el as HTMLElement).style.display = 'none'));
+      if (watermarkElement) watermarkElement.classList.add('watermark-visible');
 
-      // Detect dark mode for background color
+      // Capture screenshot with dark/light mode support
       const isDark = document.documentElement.classList.contains('dark');
-      const bgColor = isDark ? '#0f0f14' : '#fafafc';
-
-      // Capture with modern-screenshot at 2x scale
       const dataUrl = await domToPng(element, {
         scale: 2,
-        backgroundColor: bgColor,
-        style: {
-          padding: '24px',
-        },
+        backgroundColor: isDark ? '#1a1512' : '#faf8f5',
       });
 
       // Restore hidden elements
-      hideElements.forEach(el => {
-        (el as HTMLElement).style.display = '';
-      });
+      exportHideElements.forEach(el => ((el as HTMLElement).style.display = ''));
+      if (watermarkElement) watermarkElement.classList.remove('watermark-visible');
 
-      // Hide watermark again
-      watermarks.forEach(el => {
-        el.classList.remove('watermark-visible');
-      });
+      const timestamp = Date.now();
+      const fullFilename = `周公解梦-${timestamp}.png`;
 
-      // Convert dataUrl to blob for sharing
-      const blob = await (await fetch(dataUrl)).blob();
-      const file = new File([blob], 'dream-interpretation.png', { type: 'image/png' });
+      // Convert data URL to blob for sharing
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      const file = new File([blob], fullFilename, { type: 'image/png' });
 
       // Try native share first (mobile)
-      if (canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          title: 'AI 解梦结果',
-          text: '周公解梦 - 解读您的梦境',
-          files: [file],
-        });
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: '周公解梦',
+          });
+        } catch {
+          // User cancelled or share failed, fall back to download
+          downloadImage(dataUrl, fullFilename);
+        }
       } else {
-        // Fallback to download - must append to DOM for some browsers
-        const link = document.createElement('a');
-        link.href = dataUrl;
-        link.download = `周公解梦-${new Date().toISOString().slice(0, 10)}.png`;
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Desktop: download directly
+        downloadImage(dataUrl, fullFilename);
       }
     } catch (e) {
       console.error('Export failed:', e);
-      // Restore elements on error
-      if (exportAreaRef.current) {
-        const hideElements = exportAreaRef.current.querySelectorAll('.export-hide');
-        hideElements.forEach(el => {
-          (el as HTMLElement).style.display = '';
-        });
-        const watermarks = exportAreaRef.current.querySelectorAll('.watermark');
-        watermarks.forEach(el => {
-          el.classList.remove('watermark-visible');
-        });
-      }
+      alert('导出失败，请重试');
     } finally {
       setIsExporting(false);
     }
