@@ -336,7 +336,7 @@ export function AIInterpretation({
                   setInterpretation(data.interpretation);
                 }
 
-                if (data.done) {
+                if (data.type === 'done' || data.done) {
                   flush();
                   // Store interpretation text for guidance API
                   setInterpretationText(fullText);
