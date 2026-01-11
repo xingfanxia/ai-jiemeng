@@ -525,11 +525,14 @@ export function AIInterpretation({
           files: [file],
         });
       } else {
-        // Fallback to download
+        // Fallback to download - must append to DOM for some browsers
         const link = document.createElement('a');
         link.href = dataUrl;
-        link.download = `dream-interpretation-${new Date().toISOString().slice(0, 10)}.png`;
+        link.download = `周公解梦-${new Date().toISOString().slice(0, 10)}.png`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
       }
     } catch (e) {
       console.error('Export failed:', e);
