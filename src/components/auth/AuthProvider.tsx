@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setIsSaveLimitLoading(true);
     try {
-      const response = await fetch('/api/readings?limit=1');
+      const response = await fetch('/api/dreams?limit=1');
       if (response.ok) {
         const data = await response.json();
         if (data.saveLimit) {

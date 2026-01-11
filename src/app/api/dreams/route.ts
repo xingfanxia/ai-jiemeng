@@ -57,12 +57,26 @@ export async function GET(request: NextRequest) {
     const total = count || 0;
     const hasMore = offset + limit < total;
 
+    // Get user's save limit from profile
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: profile } = await (supabase
+      .from('user_profiles') as any)
+      .select('max_saved_readings')
+      .eq('id', user.id)
+      .single();
+
+    const maxSaved = (profile as { max_saved_readings?: number })?.max_saved_readings ?? 5;
+
     return NextResponse.json({
       dreams: dreams || [],
       total,
       page,
       limit,
       hasMore,
+      saveLimit: {
+        used: total,
+        max: maxSaved,
+      },
     });
   } catch (error) {
     console.error('[Dreams API] Error:', error);
