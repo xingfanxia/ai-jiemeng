@@ -11,51 +11,75 @@
 | Requirements | `memory/requirements-synthesis.md` | Synthesized requirements |
 
 ## Current State
-- Phase: **Core Development**
-- Progress: 5 of 10 tasks completed
-- Branch: main
-- Last Commit: 69e97fa - Fix Tailwind v4 CSS and AI provider defaults
+- **Phase**: Core Development
+- **Progress**: Foundation complete, need API + UI
+- **Branch**: main
+- **Last Commit**: 7682675 - Add comprehensive dream knowledge base
 
-## Context Summary
-- AI dream interpretation app modeled on bazi-app architecture
-- Reusing: Supabase auth, AI providers (Gemini default), credit system, UI components
-- Database: `dream_readings` + `dream_symbols` tables created with RLS
-- Stack: Next.js 16 + React 19 + Tailwind 4 + Supabase + Gemini 3 Pro/Claude Opus 4.5
+## What's Done ✅
 
-## Deployment
+### Infrastructure
 - **GitHub**: https://github.com/xingfanxia/ai-jiemeng
-- **Vercel**: https://aijiemeng-dr8r5qkcq-xingfanxias-projects.vercel.app (Ready)
-- **Supabase**: Shared instance with bazi-app
+- **Vercel**: Deployed, linked to GitHub (auto-deploy on push)
+- **Supabase**: `dream_readings` table with RLS policies
 
-## Immediate Next Steps
-1. Implement `/api/interpret` with streaming AI response
-2. Build DreamForm component for dream input
-3. Build AIInterpretation component for streaming display
-4. Add dream history page
+### Knowledge Base (`src/lib/knowledge/`)
+- `symbols.ts` - **70+ dream symbols** with:
+  - Traditional Zhou Gong interpretations with source texts
+  - Conditional variations (孕妇, 商人, 男/女)
+  - Freudian interpretations
+  - Jungian interpretations
+  - Fortune scores and related symbols
+- `conditions.ts` - Interpretation conditions:
+  - 五行 (Five Elements) system
+  - 十二时辰 with dream tendencies
+  - 反梦 (reverse dream) logic
+  - 五不占 (when NOT to interpret)
+- `prompts.ts` - AI system prompts:
+  - Multi-perspective interpretation prompts
+  - Sensitive content handling
+  - Crisis response protocols
+- `categories.ts` - 13 symbol categories
+- `fortune.ts` - Fortune calculation (大吉/吉/中平/凶/大凶)
 
-## Blockers/Open Questions
-- None currently
+### Research Files (`memory/`)
+- `research-conditions.md` - Conditional interpretation system
+- `research-psychological.md` - Freud/Jung dream theory
+- `research-symbols-traditional.md` - Traditional symbols
+- `research-symbols-activities-objects.md` - Activities/objects
+- `research-symbols-supernatural-people.md` - Supernatural/people
 
-## Reference Architecture (from bazi-app)
-```
-src/
-├── app/
-│   ├── api/           # REST endpoints
-│   ├── auth/callback  # OAuth callback
-│   └── page.tsx       # Main UI
-├── components/
-│   ├── auth/          # Login, credits
-│   ├── dream/         # Dream-specific (NEW)
-│   └── ui/            # Base components
-├── lib/
-│   ├── ai/            # Provider abstraction
-│   ├── knowledge/     # Dream symbols (NEW)
-│   ├── supabase/      # Database client
-│   └── types/         # TypeScript definitions
-```
+## What's Next 🔜
+
+### Immediate (API)
+1. Implement `/api/interpret` - Streaming AI dream interpretation
+2. Implement `/api/dreams` - CRUD for dream entries
+3. Implement `/api/symbols` - Symbol dictionary lookup
+
+### Then (UI)
+4. `DreamForm` component - Dream input with mood/context
+5. `AIInterpretation` component - Streaming display
+6. `SymbolCard` component - Symbol detail display
+7. Main page with dream journal
+
+## Key Architecture Decisions
+- **AI Provider**: Gemini 3 Pro default (70%), Claude backup (30%)
+- **Knowledge**: TypeScript files in `lib/knowledge/` (not DB)
+- **Database**: Only `dream_readings` for user data
+- **Auth**: Supabase OAuth (shared with bazi-app)
+- **Credits**: Reuse bazi-app credit system
+
+## Environment Variables (Vercel)
+All configured:
+- Supabase (via integration)
+- `ANTHROPIC_API_KEY`
+- `GOOGLE_AI_API_KEY`
+- `GEMINI_MODEL=gemini-3-pro-preview`
+- `AI_DEFAULT_PROVIDER=gemini`
 
 ## Session History
 | Date | Focus | Outcome |
 |------|-------|---------|
-| 2026-01-11 | Research | Analyzed bazi-app architecture, synthesized requirements |
-| 2026-01-11 | Setup | Project init, GitHub repo, Vercel deployment, Supabase tables |
+| 2026-01-11 | Research | Analyzed bazi-app, synthesized requirements |
+| 2026-01-11 | Setup | GitHub, Vercel, Supabase tables |
+| 2026-01-11 | Knowledge | 70+ symbols, conditions, prompts |
