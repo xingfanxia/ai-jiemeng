@@ -11,21 +11,27 @@
 | Requirements | `memory/requirements-synthesis.md` | Synthesized requirements |
 
 ## Current State
-- Phase: **Foundation Setup**
-- Progress: Step 1 of 12 (Project Initialization)
+- Phase: **Core Development**
+- Progress: 5 of 10 tasks completed
 - Branch: main
-- Last Commit: Initial setup
+- Last Commit: 69e97fa - Fix Tailwind v4 CSS and AI provider defaults
 
 ## Context Summary
-- Building AI dream interpretation app modeled on bazi-app architecture
-- Reusing: Supabase auth, AI providers, credit system, UI components
-- Unique: Dream knowledge base with 7000+ symbols, condition-based interpretation
-- Stack: Next.js 16 + React 19 + Tailwind 4 + Supabase + Claude/Gemini
+- AI dream interpretation app modeled on bazi-app architecture
+- Reusing: Supabase auth, AI providers (Gemini default), credit system, UI components
+- Database: `dream_readings` + `dream_symbols` tables created with RLS
+- Stack: Next.js 16 + React 19 + Tailwind 4 + Supabase + Gemini 3 Pro/Claude Opus 4.5
+
+## Deployment
+- **GitHub**: https://github.com/xingfanxia/ai-jiemeng
+- **Vercel**: https://aijiemeng-dr8r5qkcq-xingfanxias-projects.vercel.app (Ready)
+- **Supabase**: Shared instance with bazi-app
 
 ## Immediate Next Steps
-1. Initialize Next.js project with TypeScript
-2. Copy shared infrastructure from bazi-app
-3. Configure dream-themed Tailwind colors
+1. Implement `/api/interpret` with streaming AI response
+2. Build DreamForm component for dream input
+3. Build AIInterpretation component for streaming display
+4. Add dream history page
 
 ## Blockers/Open Questions
 - None currently
@@ -52,3 +58,4 @@ src/
 | Date | Focus | Outcome |
 |------|-------|---------|
 | 2026-01-11 | Research | Analyzed bazi-app architecture, synthesized requirements |
+| 2026-01-11 | Setup | Project init, GitHub repo, Vercel deployment, Supabase tables |
