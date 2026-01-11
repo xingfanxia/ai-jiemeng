@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Sparkles, RefreshCw, Share2, Loader2, BookOpen, Brain, Compass } from 'lucide-react';
+import { Sparkles, RefreshCw, Share2, Loader2, BookOpen, Compass } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -12,33 +12,24 @@ import type { DreamSymbol, DreamInterpretation, DreamMood } from '@/lib/types/dr
 import type { FortuneType } from '@/lib/knowledge/fortune';
 
 /**
- * Section configuration for interpretation tabs
+ * Two-tab configuration: 解梦 + 指引
  */
-const SECTIONS = {
-  zhougong: {
-    id: 'zhougong',
-    label: '周公解梦',
+const TABS = {
+  interpretation: {
+    id: 'interpretation',
+    label: '解梦',
     icon: BookOpen,
-    description: '传统解梦智慧',
     color: 'text-amber-600 dark:text-amber-400',
-  },
-  psychology: {
-    id: 'psychology',
-    label: '心理分析',
-    icon: Brain,
-    description: '潜意识解读',
-    color: 'text-blue-600 dark:text-blue-400',
   },
   guidance: {
     id: 'guidance',
-    label: '运势指引',
+    label: '指引',
     icon: Compass,
-    description: '未来指引',
-    color: 'text-green-600 dark:text-green-400',
+    color: 'text-emerald-600 dark:text-emerald-400',
   },
 } as const;
 
-type SectionId = keyof typeof SECTIONS;
+type TabId = keyof typeof TABS;
 
 interface AIInterpretationProps {
   /** The dream content being interpreted */
@@ -235,7 +226,7 @@ export function AIInterpretation({
 }: AIInterpretationProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState<SectionId>('zhougong');
+  const [activeTab, setActiveTab] = useState<TabId>('interpretation');
   const [interpretation, setInterpretation] = useState<DreamInterpretation | null>(null);
   const [symbols, setSymbols] = useState<DreamSymbol[]>([]);
   const [fortune, setFortune] = useState<FortuneType | null>(null);
@@ -389,29 +380,37 @@ export function AIInterpretation({
     }
   };
 
+  // Split content by --- separator
+  const [interpretationContent, guidanceContent] = (() => {
+    if (!displayedText) return ['', ''];
+    const parts = displayedText.split(/\n---\n|\n---|\n-{3,}\n/);
+    return [parts[0]?.trim() || '', parts[1]?.trim() || ''];
+  })();
+
   const cardContent = (
     <div className="space-y-4">
-      {/* Section Tabs */}
-      <Tabs value={activeSection} onValueChange={(v) => setActiveSection(v as SectionId)}>
-        <TabsList className="grid w-full grid-cols-3 h-11">
-          {Object.entries(SECTIONS).map(([id, section]) => {
-            const Icon = section.icon;
+      {/* Two Tabs: 解梦 + 指引 */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabId)}>
+        <TabsList className="grid w-full grid-cols-2 h-11">
+          {Object.entries(TABS).map(([id, tab]) => {
+            const Icon = tab.icon;
+            const hasContent = id === 'interpretation' ? !!interpretationContent : !!guidanceContent;
             return (
               <TabsTrigger
                 key={id}
                 value={id}
-                className="flex items-center gap-1.5 text-xs sm:text-sm"
+                className="flex items-center gap-2 text-sm"
+                disabled={!hasContent && !isLoading && id === 'guidance'}
               >
-                <Icon className={`w-4 h-4 ${section.color}`} />
-                <span className="hidden sm:inline">{section.label}</span>
-                <span className="sm:hidden">{section.label.slice(0, 2)}</span>
+                <Icon className={`w-4 h-4 ${tab.color}`} />
+                {tab.label}
               </TabsTrigger>
             );
           })}
         </TabsList>
 
-        {/* Content Area */}
-        <TabsContent value={activeSection} className="mt-4">
+        {/* 解梦 Tab */}
+        <TabsContent value="interpretation" className="mt-4">
           {/* Generate Button - Only show when no content */}
           {!displayedText && !isLoading && (
             <div className="flex flex-col items-center justify-center py-8 gap-4">
@@ -421,7 +420,7 @@ export function AIInterpretation({
               <div className="text-center space-y-2">
                 <p className="text-muted-foreground">准备好开始解梦了</p>
                 <p className="text-xs text-muted-foreground/60">
-                  AI 将结合周公解梦与现代心理学为您分析
+                  周公解梦大师将为您解读梦境
                 </p>
               </div>
               <Button
@@ -453,15 +452,15 @@ export function AIInterpretation({
           )}
 
           {/* Interpretation Content */}
-          {(displayedText || isLoading) && (
+          {(interpretationContent || isLoading) && (
             <div
               ref={contentRef}
               className="min-h-[200px] max-h-[60vh] overflow-y-auto rounded-lg bg-secondary/20 p-4 scroll-smooth"
             >
-              {displayedText ? (
+              {interpretationContent ? (
                 <div className="space-y-4">
-                  <MarkdownText content={displayedText} />
-                  {(isLoading || isAnimating) && (
+                  <MarkdownText content={interpretationContent} />
+                  {(isLoading || isAnimating) && !guidanceContent && (
                     <span className="inline-block w-2 h-4 ml-1 bg-primary animate-pulse rounded-sm" />
                   )}
                 </div>
@@ -476,6 +475,35 @@ export function AIInterpretation({
                   <p className="text-sm text-muted-foreground mt-4">AI 正在解读您的梦境...</p>
                 </div>
               )}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* 指引 Tab */}
+        <TabsContent value="guidance" className="mt-4">
+          {guidanceContent ? (
+            <div className="min-h-[200px] max-h-[60vh] overflow-y-auto rounded-lg bg-secondary/20 p-4 scroll-smooth">
+              <div className="space-y-4">
+                <MarkdownText content={guidanceContent} />
+                {(isLoading || isAnimating) && (
+                  <span className="inline-block w-2 h-4 ml-1 bg-primary animate-pulse rounded-sm" />
+                )}
+              </div>
+            </div>
+          ) : isLoading ? (
+            <div className="flex flex-col items-center justify-center h-[200px]">
+              <div className="relative">
+                <div className="w-12 h-12 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Compass className="w-5 h-5 text-primary animate-pulse" />
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground mt-4">正在生成运势指引...</p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+              <Compass className="w-10 h-10 mb-2 opacity-50" />
+              <p>完成解梦后查看指引</p>
             </div>
           )}
         </TabsContent>
