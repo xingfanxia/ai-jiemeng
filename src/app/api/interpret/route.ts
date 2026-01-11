@@ -27,11 +27,15 @@
 
 import { NextRequest } from 'next/server';
 import { streamDreamInterpretation, type InterpretationRequest } from '@/lib/ai/interpret';
+import { logLlmCost, calculateCostFromModelName, PROVIDER_CONFIG } from '@/lib/ai';
+import type { AIProviderType } from '@/lib/ai/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+
   try {
     const body = await request.json();
     // Accept both 'content' and 'dreamContent' field names
@@ -78,25 +82,33 @@ export async function POST(request: NextRequest) {
 
     const stream = new ReadableStream({
       async start(controller) {
-        try {
-          let provider: string | undefined;
+        let providerName: string | undefined;
+        let providerType: AIProviderType = 'gemini'; // Default
+        let outputCharCount = 0;
+        let streamUsage: { inputTokens: number; outputTokens: number } | undefined;
+        let streamSuccess = true;
 
+        try {
           for await (const chunk of streamDreamInterpretation(interpretRequest)) {
             // Capture provider name from first chunk
-            if (chunk.provider && !provider) {
-              provider = chunk.provider;
+            if (chunk.provider && !providerName) {
+              providerName = chunk.provider;
+              // Determine provider type from name
+              providerType = providerName.toLowerCase().includes('claude') ? 'claude' : 'gemini';
               // Send provider info as first SSE event
-              const providerEvent = `data: ${JSON.stringify({ type: 'provider', provider })}\n\n`;
+              const providerEvent = `data: ${JSON.stringify({ type: 'provider', provider: providerName })}\n\n`;
               controller.enqueue(encoder.encode(providerEvent));
             }
 
             if (chunk.content) {
+              outputCharCount += chunk.content.length;
               // Send text chunks
               const textEvent = `data: ${JSON.stringify({ type: 'text', content: chunk.content })}\n\n`;
               controller.enqueue(encoder.encode(textEvent));
             }
 
             if (chunk.done && chunk.usage) {
+              streamUsage = chunk.usage;
               // Send usage info at the end
               const usageEvent = `data: ${JSON.stringify({ type: 'usage', usage: chunk.usage })}\n\n`;
               controller.enqueue(encoder.encode(usageEvent));
@@ -109,11 +121,55 @@ export async function POST(request: NextRequest) {
 
           controller.close();
         } catch (error) {
+          streamSuccess = false;
           console.error('[Dream Interpret API] Stream error:', error);
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           const errorEvent = `data: ${JSON.stringify({ type: 'error', error: errorMessage })}\n\n`;
           controller.enqueue(encoder.encode(errorEvent));
           controller.close();
+
+          // Log error cost
+          const latencyMs = Date.now() - startTime;
+          const modelName = PROVIDER_CONFIG[providerType].model;
+          logLlmCost({
+            provider: providerType,
+            model: modelName,
+            inputTokens: 0,
+            outputTokens: 0,
+            estimatedCost: 0,
+            latencyMs,
+            endpoint: 'interpret',
+            success: false,
+            errorType: errorMessage.includes('EMPTY_RESPONSE') ? 'empty_response' : 'streaming_error',
+            metadata: { streaming: true },
+          });
+        }
+
+        // Log successful streaming request
+        if (streamSuccess) {
+          const latencyMs = Date.now() - startTime;
+          const modelName = PROVIDER_CONFIG[providerType].model;
+          // Use real usage data if available, otherwise estimate from char count
+          const hasRealUsage = streamUsage && (streamUsage.inputTokens > 0 || streamUsage.outputTokens > 0);
+          const inputTokens = hasRealUsage ? streamUsage!.inputTokens : Math.ceil(dreamText.length / 4);
+          const outputTokens = hasRealUsage ? streamUsage!.outputTokens : Math.ceil(outputCharCount / 4);
+          const estimatedCost = calculateCostFromModelName(modelName, inputTokens, outputTokens);
+
+          logLlmCost({
+            provider: providerType,
+            model: modelName,
+            inputTokens,
+            outputTokens,
+            estimatedCost,
+            latencyMs,
+            endpoint: 'interpret',
+            success: true,
+            metadata: {
+              streaming: true,
+              outputCharCount,
+              tokensEstimated: !hasRealUsage,
+            },
+          });
         }
       },
     });
@@ -129,6 +185,22 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('[Dream Interpret API] Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to interpret dream';
+
+    // Log error
+    const latencyMs = Date.now() - startTime;
+    logLlmCost({
+      provider: 'gemini',
+      model: PROVIDER_CONFIG.gemini.model,
+      inputTokens: 0,
+      outputTokens: 0,
+      estimatedCost: 0,
+      latencyMs,
+      endpoint: 'interpret',
+      success: false,
+      errorType: 'request_error',
+      metadata: { error: errorMessage },
+    });
+
     return new Response(
       JSON.stringify({ error: errorMessage }),
       {

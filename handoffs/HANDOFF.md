@@ -12,9 +12,10 @@
 
 ## Current State
 - **Phase**: Core Development Complete
-- **Progress**: APIs, UI, unlock flow, share all done
+- **Progress**: All features working, cost logging added
 - **Branch**: main
-- **Last Commit**: df5239b - Split interpret API and add share functionality
+- **Last Commit**: 953a024 - Rewrite export to match bazi-app pattern
+- **Live**: https://jiemeng.ax0x.ai
 
 ## What's Done ✅
 
@@ -25,16 +26,16 @@
 - **Domain**: https://jiemeng.ax0x.ai
 
 ### APIs
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/interpret` | POST | FREE streaming AI dream interpretation (解梦 only) |
-| `/api/guidance` | POST | Streaming AI guidance (指引), costs 1 credit |
-| `/api/dreams` | GET/POST | List & create dreams |
-| `/api/dreams/[id]` | GET/PUT/DELETE | Single dream CRUD |
-| `/api/symbols` | GET | Search symbol dictionary |
-| `/api/symbols/[name]` | GET | Get symbol details |
-| `/api/credits` | GET | User credits + daily check-in |
-| `/auth/callback` | GET | OAuth callback handler |
+| Endpoint | Method | Purpose | Cost |
+|----------|--------|---------|------|
+| `/api/interpret` | POST | Streaming AI dream interpretation (解梦) | FREE |
+| `/api/guidance` | POST | Streaming AI guidance (指引) | 1 credit |
+| `/api/dreams` | GET/POST | List & create dreams | - |
+| `/api/dreams/[id]` | GET/PUT/DELETE | Single dream CRUD | - |
+| `/api/symbols` | GET | Search symbol dictionary | - |
+| `/api/symbols/[name]` | GET | Get symbol details | - |
+| `/api/credits` | GET | User credits + daily check-in | - |
+| `/auth/callback` | GET | OAuth callback handler | - |
 
 ### UI Components
 - `DreamForm` - Dream input with 十二时辰, mood, context
@@ -43,40 +44,56 @@
 - `DreamJournal` - Saved dreams list
 - `FortuneIndicator` - 大吉/吉/中平/凶/大凶 badge
 
-### Features Implemented This Session
+### Features Completed
 1. **Two-step unlock flow**:
    - 解梦 (interpretation) → FREE, auto-generated
    - 指引 (guidance) → Locked, shows "解锁指引 (1积分)" button
    - Clicking unlock calls `/api/guidance`, deducts 1 credit
+   - Credits refresh after unlock
 
-2. **Share functionality**:
+2. **Share functionality** (same as bazi-app):
    - Uses `modern-screenshot` (domToPng)
    - Mobile: native share via Web Share API
-   - Desktop: downloads PNG
-   - Watermark with "周公解梦" branding
+   - Desktop: downloads PNG (`周公解梦-timestamp.png`)
+   - Watermark with branding
 
-3. **Prompt improvements**:
-   - Removed intro text ("你好呀，有缘人"等)
-   - Direct interpretation without self-introduction
-   - Strict prohibition rules
+3. **Prompt style**:
+   - 优雅古韵, can quote classical texts
+   - NO intro ("你好呀，有缘人" removed)
+   - Direct interpretation
+   - Prohibitions: Freud/Jung, fabrication, scary language
+
+4. **Cost Logging** (shared `llm_costs` table with bazi-app):
+   - Logs to Supabase `llm_costs` table
+   - `app = 'dream'`
+   - Endpoints: `interpret`, `guidance`
+   - Tracks: provider, model, tokens, cost, latency, errors
 
 ### Knowledge Base (`src/lib/knowledge/`)
 - 70+ dream symbols with traditional interpretations
 - Conditions system (五行, 时辰, 反梦, 五不占)
 - AI prompts for Zhou Gong style interpretation
 
-## What's Next 🔜
+## Bug Fixes This Session
+1. ✅ Guidance unlock button disabled after interpretation complete → Fixed `data.type === 'done'` check
+2. ✅ Share/download not working → Rewrote to match bazi-app pattern exactly
+3. ✅ Credits not refreshing after unlock → Added `refreshCredits()` call
+4. ✅ Prompt too literary → Restored original style, only removed intro
 
-### Testing
-1. Test full flow end-to-end (logged in user)
-2. Test credit deduction for 指引
-3. Test share functionality on mobile
-4. Test auth flow (OAuth buttons)
+## Cost Logging Setup
 
-### Polish
-5. UI/UX refinements based on testing
-6. Error handling edge cases
-7. Performance optimization
+For dashboard integration:
+- **Table**: `llm_costs` (shared with bazi-app)
+- **App identifier**: `app = 'dream'`
+- **Endpoints**: `interpret` (free), `guidance` (1 credit)
+- **Providers**: `gemini` (primary), `claude` (backup)
+
+Sample query:
+```sql
+SELECT DATE(created_at), endpoint, COUNT(*), SUM(estimated_cost)
+FROM llm_costs WHERE app = 'dream'
+GROUP BY DATE(created_at), endpoint;
+```
 
 ## Key Architecture Decisions
 - **AI Provider**: Gemini 3 Pro default (70%), Claude backup (30%)
@@ -84,6 +101,7 @@
 - **Database**: Only `dream_readings` for user data
 - **Auth**: Supabase OAuth (shared with bazi-app)
 - **Credits**: Reuse bazi-app credit system (deduct_credit RPC)
+- **Cost Logging**: Shared `llm_costs` table with bazi-app
 
 ## Environment Variables (Vercel)
 All configured:
@@ -93,8 +111,11 @@ All configured:
 - `GEMINI_MODEL=gemini-3-pro-preview`
 - `AI_DEFAULT_PROVIDER=gemini`
 
-## Known Issues
-- None critical at this time
+## What's Next 🔜
+1. Test full flow on mobile
+2. Polish UI based on user feedback
+3. Add more dream symbols to knowledge base
+4. Dashboard integration (cost analytics)
 
 ## Session History
 | Date | Focus | Outcome |
@@ -106,10 +127,11 @@ All configured:
 | 2026-01-11 | UI | DreamForm, AIInterpretation, 2-tab design |
 | 2026-01-11 | Prompt | Remove Freud/Jung, fix hallucination |
 | 2026-01-11 | Split API | interpret (free) + guidance (credits) |
-| 2026-01-11 | Share | modern-screenshot, mobile share |
+| 2026-01-11 | Share | modern-screenshot, bazi-app pattern |
+| 2026-01-11 | Bugs | Fix unlock, share download, credits refresh |
+| 2026-01-11 | Logging | Add cost logging to llm_costs table |
 
 ## Resume Command
 ```
 Resume work on AI周公解梦. Read handoffs/HANDOFF.md first.
-Next: Test full flow end-to-end, polish UI
 ```

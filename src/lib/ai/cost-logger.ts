@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import type { AIProviderType } from './types';
 
-export type LlmCostEndpoint = 'interpret' | 'interpret-stream' | 'chat';
+export type LlmCostEndpoint = 'interpret' | 'interpret-stream' | 'chat' | 'guidance';
 
 export interface LogCostParams {
   provider: AIProviderType;
