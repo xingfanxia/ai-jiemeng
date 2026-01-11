@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useTypewriter } from '@/hooks/useTypewriter';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { SymbolCard } from './SymbolCard';
 import { FortuneIndicator } from './FortuneIndicator';
 import type { DreamSymbol, DreamInterpretation, DreamMood } from '@/lib/types/dream';
@@ -225,6 +226,7 @@ export function AIInterpretation({
   onComplete,
   showContainer = true,
 }: AIInterpretationProps) {
+  const { refreshCredits } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('interpretation');
@@ -399,6 +401,8 @@ export function AIInterpretation({
 
       // Unlock immediately when request is accepted
       setGuidanceLocked(false);
+      // Refresh credits display after deduction
+      refreshCredits();
 
       // Handle SSE streaming response
       const reader = res.body?.getReader();
@@ -446,7 +450,7 @@ export function AIInterpretation({
     } finally {
       setGuidanceLoading(false);
     }
-  }, [dreamContent, interpretationText, guidanceLoading]);
+  }, [dreamContent, interpretationText, guidanceLoading, refreshCredits]);
 
   // Auto-start if enabled
   useEffect(() => {
