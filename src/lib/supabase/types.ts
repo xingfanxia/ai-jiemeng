@@ -6,6 +6,16 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
+// Dream-specific types
+export type DreamType = 'normal' | 'nightmare' | 'lucid' | 'recurring' | 'prenatal';
+export type FortuneType = '大吉' | '吉' | '中平' | '凶' | '大凶';
+export type DreamSource = 'manual' | 'voice' | 'credit_unlock';
+
+export interface MoodData {
+  emotion: string;
+  intensity: number;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -14,11 +24,20 @@ export interface Database {
           id: string;
           user_id: string;
           title: string | null;
-          dream_content: string;
-          interpretation: InterpretationJson | null;
-          symbols: DreamSymbolJson[] | null;
-          mood: string | null;
-          tags: string[] | null;
+          content: string;
+          dream_date: string;
+          recorded_at: string;
+          mood_before: MoodData | null;
+          mood_after: MoodData | null;
+          clarity: number | null;
+          vividness: number | null;
+          dream_type: DreamType;
+          extracted_symbols: string[];
+          interpretations: Json | null;
+          fortune_score: number | null;
+          fortune_type: FortuneType | null;
+          chat_messages: Json[];
+          source: DreamSource;
           created_at: string;
           updated_at: string;
         };
@@ -26,11 +45,20 @@ export interface Database {
           id?: string;
           user_id: string;
           title?: string | null;
-          dream_content: string;
-          interpretation?: InterpretationJson | null;
-          symbols?: DreamSymbolJson[] | null;
-          mood?: string | null;
-          tags?: string[] | null;
+          content: string;
+          dream_date?: string;
+          recorded_at?: string;
+          mood_before?: MoodData | null;
+          mood_after?: MoodData | null;
+          clarity?: number | null;
+          vividness?: number | null;
+          dream_type?: DreamType;
+          extracted_symbols?: string[];
+          interpretations?: Json | null;
+          fortune_score?: number | null;
+          fortune_type?: FortuneType | null;
+          chat_messages?: Json[];
+          source?: DreamSource;
           created_at?: string;
           updated_at?: string;
         };
@@ -38,11 +66,20 @@ export interface Database {
           id?: string;
           user_id?: string;
           title?: string | null;
-          dream_content?: string;
-          interpretation?: InterpretationJson | null;
-          symbols?: DreamSymbolJson[] | null;
-          mood?: string | null;
-          tags?: string[] | null;
+          content?: string;
+          dream_date?: string;
+          recorded_at?: string;
+          mood_before?: MoodData | null;
+          mood_after?: MoodData | null;
+          clarity?: number | null;
+          vividness?: number | null;
+          dream_type?: DreamType;
+          extracted_symbols?: string[];
+          interpretations?: Json | null;
+          fortune_score?: number | null;
+          fortune_type?: FortuneType | null;
+          chat_messages?: Json[];
+          source?: DreamSource;
           created_at?: string;
           updated_at?: string;
         };
@@ -202,6 +239,7 @@ export interface InterpretationJson {
 // Type helpers
 export type DreamReading = Database['public']['Tables']['dream_readings']['Row'];
 export type DreamReadingInsert = Database['public']['Tables']['dream_readings']['Insert'];
+export type DreamReadingUpdate = Database['public']['Tables']['dream_readings']['Update'];
 export type UserProfile = Database['public']['Tables']['user_profiles']['Row'];
 export type UsageLog = Database['public']['Tables']['usage_log']['Row'];
 export type LlmCost = Database['public']['Tables']['llm_costs']['Row'];

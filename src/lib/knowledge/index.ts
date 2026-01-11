@@ -19,6 +19,7 @@ export {
   DREAM_INTERPRETATION_BRIEF_SYSTEM_PROMPT,
   SYMBOL_INTERPRETATION_SYSTEM_PROMPT,
   PSYCHOLOGICAL_INTERPRETATION_SYSTEM_PROMPT,
+  MULTI_PERSPECTIVE_SYSTEM_PROMPT,
   CARDS_INTERPRETATION_SYSTEM_PROMPT,
   // Prompt Generators
   generateDreamInterpretationPrompt,
@@ -95,6 +96,7 @@ export {
   formatConditionForDisplay,
   getCurrentTimeOfDay,
   getCurrentSeason,
+  getDreamTimeContext,
   // Types
   type DreamerGender,
   type DreamerMaritalStatus,

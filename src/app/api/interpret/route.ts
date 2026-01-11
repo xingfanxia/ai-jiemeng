@@ -1,76 +1,138 @@
-import { NextRequest, NextResponse } from 'next/server';
-
 /**
  * Dream Interpretation API Route
  *
  * POST /api/interpret
  *
+ * Streaming endpoint for AI-powered dream interpretation.
+ * Uses multi-perspective analysis combining:
+ * - Zhou Gong (周公解梦) traditional Chinese interpretation
+ * - Freudian psychoanalysis
+ * - Jungian analytical psychology
+ *
  * Request body:
  * {
- *   dreamContent: string;
- *   mood?: string;
+ *   content: string;          // Dream description
+ *   dreamDate?: string;       // For 时辰 calculation
+ *   dreamTime?: string;       // Hour of dream (子时, 丑时, etc.)
+ *   mood?: string;            // User's mood
+ *   context?: {               // Additional context
+ *     isPregnant?: boolean;
+ *     occupation?: string;
+ *     gender?: 'male' | 'female';
+ *   }
  * }
  *
- * Response:
- * {
- *   interpretation: {
- *     summary: string;
- *     detailed: string;
- *     advice: string;
- *     themes: string[];
- *     emotionalAnalysis: string;
- *   };
- *   symbols: Array<{
- *     name: string;
- *     meaning: string;
- *     category: string;
- *     significance: 'high' | 'medium' | 'low';
- *   }>;
- * }
+ * Response: Streaming text with multi-perspective interpretation
  */
+
+import { NextRequest } from 'next/server';
+import { streamDreamInterpretation, type InterpretationRequest } from '@/lib/ai/interpret';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { dreamContent } = body;
+    const { content, dreamDate, dreamTime, mood, context } = body;
 
-    if (!dreamContent || typeof dreamContent !== 'string') {
-      return NextResponse.json(
-        { error: 'Dream content is required' },
-        { status: 400 }
+    // Validate required field
+    if (!content || typeof content !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Dream content is required' }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
       );
     }
 
-    // TODO: Implement AI dream interpretation
-    // 1. Get provider from AI abstraction layer
-    // 2. Build prompt with dream interpretation system prompt
-    // 3. Call AI API with streaming
-    // 4. Parse response and extract symbols
-    // 5. Return interpretation
-
-    // Placeholder response for now
-    return NextResponse.json({
-      interpretation: {
-        summary: 'Dream interpretation is coming soon...',
-        detailed: 'Full interpretation will be available once the AI integration is complete.',
-        advice: 'Keep a dream journal to track patterns over time.',
-        themes: ['exploration', 'self-discovery'],
-        emotionalAnalysis: 'Your dream suggests a period of introspection.',
-      },
-      symbols: [
+    // Validate content length (prevent abuse)
+    if (content.length > 5000) {
+      return new Response(
+        JSON.stringify({ error: 'Dream content is too long (max 5000 characters)' }),
         {
-          name: 'placeholder',
-          meaning: 'Symbol analysis coming soon',
-          category: 'general',
-          significance: 'medium' as const,
-        },
-      ],
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    // Build interpretation request
+    const interpretRequest: InterpretationRequest = {
+      content,
+      dreamDate,
+      dreamTime,
+      mood,
+      context: context ? {
+        isPregnant: context.isPregnant,
+        occupation: context.occupation,
+        gender: context.gender,
+      } : undefined,
+    };
+
+    // Create a streaming response
+    const encoder = new TextEncoder();
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          let provider: string | undefined;
+
+          for await (const chunk of streamDreamInterpretation(interpretRequest)) {
+            // Capture provider name from first chunk
+            if (chunk.provider && !provider) {
+              provider = chunk.provider;
+              // Send provider info as first SSE event
+              const providerEvent = `data: ${JSON.stringify({ type: 'provider', provider })}\n\n`;
+              controller.enqueue(encoder.encode(providerEvent));
+            }
+
+            if (chunk.content) {
+              // Send text chunks
+              const textEvent = `data: ${JSON.stringify({ type: 'text', content: chunk.content })}\n\n`;
+              controller.enqueue(encoder.encode(textEvent));
+            }
+
+            if (chunk.done && chunk.usage) {
+              // Send usage info at the end
+              const usageEvent = `data: ${JSON.stringify({ type: 'usage', usage: chunk.usage })}\n\n`;
+              controller.enqueue(encoder.encode(usageEvent));
+            }
+          }
+
+          // Send done event
+          const doneEvent = `data: ${JSON.stringify({ type: 'done' })}\n\n`;
+          controller.enqueue(encoder.encode(doneEvent));
+
+          controller.close();
+        } catch (error) {
+          console.error('[Dream Interpret API] Stream error:', error);
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          const errorEvent = `data: ${JSON.stringify({ type: 'error', error: errorMessage })}\n\n`;
+          controller.enqueue(encoder.encode(errorEvent));
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache, no-transform',
+        'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no',
+      },
     });
   } catch (error) {
     console.error('[Dream Interpret API] Error:', error);
-    return NextResponse.json(
-      { error: 'Failed to interpret dream' },
-      { status: 500 }
+    const errorMessage = error instanceof Error ? error.message : 'Failed to interpret dream';
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
     );
   }
 }

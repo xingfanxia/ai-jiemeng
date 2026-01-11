@@ -37,3 +37,15 @@ export { getSystemPrompt, adaptPromptForProvider } from './prompts';
 
 // Cost logging
 export { logLlmCost, type LogCostParams, type LlmCostEndpoint } from './cost-logger';
+
+// Dream Interpretation
+export {
+  streamDreamInterpretation,
+  getDreamInterpretation,
+  extractSymbols,
+  buildInterpretationContext,
+  selectInterpretationProvider,
+  type InterpretationRequest,
+  type ExtractedSymbol,
+  type InterpretationContext,
+} from './interpret';
