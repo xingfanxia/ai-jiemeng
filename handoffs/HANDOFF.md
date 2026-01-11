@@ -11,10 +11,10 @@
 | Requirements | `memory/requirements-synthesis.md` | Synthesized requirements |
 
 ## Current State
-- **Phase**: Core Development
-- **Progress**: Foundation complete, need API + UI
+- **Phase**: Core Development Complete, UX Refinement
+- **Progress**: APIs + UI done, prompt tuning in progress
 - **Branch**: main
-- **Last Commit**: 7682675 - Add comprehensive dream knowledge base
+- **Last Commit**: 02fc37b - Fix Freud/Jung prohibition
 
 ## What's Done ✅
 
@@ -22,52 +22,66 @@
 - **GitHub**: https://github.com/xingfanxia/ai-jiemeng
 - **Vercel**: Deployed, linked to GitHub (auto-deploy on push)
 - **Supabase**: `dream_readings` table with RLS policies
+- **Domain**: https://jiemeng.ax0x.ai
+
+### APIs
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/interpret` | POST | Streaming AI dream interpretation |
+| `/api/dreams` | GET/POST | List & create dreams |
+| `/api/dreams/[id]` | GET/PUT/DELETE | Single dream CRUD |
+| `/api/symbols` | GET | Search symbol dictionary |
+| `/api/symbols/[name]` | GET | Get symbol details |
+| `/api/credits` | GET | User credits + daily check-in |
+| `/auth/callback` | GET | OAuth callback handler |
+
+### UI Components
+- `DreamForm` - Dream input with 十二时辰, mood, context
+- `AIInterpretation` - 2 tabs (解梦 + 指引), streaming display
+- `SymbolCard` - Symbol details
+- `DreamJournal` - Saved dreams list
+- `FortuneIndicator` - 大吉/吉/中平/凶/大凶 badge
 
 ### Knowledge Base (`src/lib/knowledge/`)
-- `symbols.ts` - **70+ dream symbols** with:
-  - Traditional Zhou Gong interpretations with source texts
-  - Conditional variations (孕妇, 商人, 男/女)
-  - Freudian interpretations
-  - Jungian interpretations
-  - Fortune scores and related symbols
-- `conditions.ts` - Interpretation conditions:
-  - 五行 (Five Elements) system
-  - 十二时辰 with dream tendencies
-  - 反梦 (reverse dream) logic
-  - 五不占 (when NOT to interpret)
-- `prompts.ts` - AI system prompts:
-  - Multi-perspective interpretation prompts
-  - Sensitive content handling
-  - Crisis response protocols
-- `categories.ts` - 13 symbol categories
-- `fortune.ts` - Fortune calculation (大吉/吉/中平/凶/大凶)
+- 70+ dream symbols with traditional interpretations
+- Conditions system (五行, 时辰, 反梦, 五不占)
+- AI prompts for Zhou Gong style interpretation
 
-### Research Files (`memory/`)
-- `research-conditions.md` - Conditional interpretation system
-- `research-psychological.md` - Freud/Jung dream theory
-- `research-symbols-traditional.md` - Traditional symbols
-- `research-symbols-activities-objects.md` - Activities/objects
-- `research-symbols-supernatural-people.md` - Supernatural/people
+## What's In Progress 🔄
+
+### Prompt Tuning
+- ✅ Removed Freud/Jung Western psychology
+- ✅ Added prohibition against AI fabricating user statements
+- ✅ Two-tab design (解梦 + 指引) with `---` separator
+- ⏳ User wants unlock logic like bazi-app (指引 costs credits)
+
+### Pending Decision: Unlock Flow
+User wants two-step like bazi-app:
+1. **解梦** → Free, auto-generated
+2. **指引** → Locked, costs 1 credit to unlock
+
+Options discussed:
+- Current: Both generated together, split by `---`
+- Bazi-style: Two separate API calls, 指引 requires credit deduction
 
 ## What's Next 🔜
 
-### Immediate (API)
-1. Implement `/api/interpret` - Streaming AI dream interpretation
-2. Implement `/api/dreams` - CRUD for dream entries
-3. Implement `/api/symbols` - Symbol dictionary lookup
+### Immediate (Based on User Feedback)
+1. **Decide unlock flow** - One-shot vs two-step with credits
+2. If two-step: Create `/api/guidance` endpoint with credit deduction
+3. Update `AIInterpretation` component to show unlock button
 
-### Then (UI)
-4. `DreamForm` component - Dream input with mood/context
-5. `AIInterpretation` component - Streaming display
-6. `SymbolCard` component - Symbol detail display
-7. Main page with dream journal
+### Then
+4. Test full flow end-to-end
+5. Auth integration (OAuth buttons working)
+6. Polish UI/UX
 
 ## Key Architecture Decisions
 - **AI Provider**: Gemini 3 Pro default (70%), Claude backup (30%)
 - **Knowledge**: TypeScript files in `lib/knowledge/` (not DB)
 - **Database**: Only `dream_readings` for user data
 - **Auth**: Supabase OAuth (shared with bazi-app)
-- **Credits**: Reuse bazi-app credit system
+- **Credits**: Reuse bazi-app credit system (deduct_credit RPC)
 
 ## Environment Variables (Vercel)
 All configured:
@@ -77,9 +91,22 @@ All configured:
 - `GEMINI_MODEL=gemini-3-pro-preview`
 - `AI_DEFAULT_PROVIDER=gemini`
 
+## Known Issues
+- AI sometimes still mentions things user didn't say (prompt issue)
+- Unlock flow not implemented yet
+
 ## Session History
 | Date | Focus | Outcome |
 |------|-------|---------|
 | 2026-01-11 | Research | Analyzed bazi-app, synthesized requirements |
 | 2026-01-11 | Setup | GitHub, Vercel, Supabase tables |
 | 2026-01-11 | Knowledge | 70+ symbols, conditions, prompts |
+| 2026-01-11 | APIs | interpret, dreams, symbols, credits |
+| 2026-01-11 | UI | DreamForm, AIInterpretation, 2-tab design |
+| 2026-01-11 | Prompt | Remove Freud/Jung, fix hallucination |
+
+## Resume Command
+```
+Resume work on AI周公解梦. Read handoffs/HANDOFF.md first.
+Next: Decide on unlock flow (one-shot vs two-step with credits)
+```
