@@ -34,10 +34,12 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { content, dreamDate, dreamTime, mood, context } = body;
+    // Accept both 'content' and 'dreamContent' field names
+    const { content, dreamContent, dreamDate, dreamTime, mood, context } = body;
+    const dreamText = content || dreamContent;
 
     // Validate required field
-    if (!content || typeof content !== 'string') {
+    if (!dreamText || typeof dreamText !== 'string') {
       return new Response(
         JSON.stringify({ error: 'Dream content is required' }),
         {
@@ -48,7 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate content length (prevent abuse)
-    if (content.length > 5000) {
+    if (dreamText.length > 5000) {
       return new Response(
         JSON.stringify({ error: 'Dream content is too long (max 5000 characters)' }),
         {
@@ -60,7 +62,7 @@ export async function POST(request: NextRequest) {
 
     // Build interpretation request
     const interpretRequest: InterpretationRequest = {
-      content,
+      content: dreamText,
       dreamDate,
       dreamTime,
       mood,
