@@ -11,10 +11,10 @@
 | Requirements | `memory/requirements-synthesis.md` | Synthesized requirements |
 
 ## Current State
-- **Phase**: Core Development Complete, UX Refinement
-- **Progress**: APIs + UI done, prompt tuning in progress
+- **Phase**: Core Development Complete
+- **Progress**: APIs, UI, unlock flow, share all done
 - **Branch**: main
-- **Last Commit**: 02fc37b - Fix Freud/Jung prohibition
+- **Last Commit**: df5239b - Split interpret API and add share functionality
 
 ## What's Done ✅
 
@@ -38,41 +38,45 @@
 
 ### UI Components
 - `DreamForm` - Dream input with 十二时辰, mood, context
-- `AIInterpretation` - 2 tabs (解梦 + 指引), streaming display
+- `AIInterpretation` - 2 tabs (解梦 + 指引), streaming display, two-step unlock
 - `SymbolCard` - Symbol details
 - `DreamJournal` - Saved dreams list
 - `FortuneIndicator` - 大吉/吉/中平/凶/大凶 badge
+
+### Features Implemented This Session
+1. **Two-step unlock flow**:
+   - 解梦 (interpretation) → FREE, auto-generated
+   - 指引 (guidance) → Locked, shows "解锁指引 (1积分)" button
+   - Clicking unlock calls `/api/guidance`, deducts 1 credit
+
+2. **Share functionality**:
+   - Uses `modern-screenshot` (domToPng)
+   - Mobile: native share via Web Share API
+   - Desktop: downloads PNG
+   - Watermark with "周公解梦" branding
+
+3. **Prompt improvements**:
+   - Removed intro text ("你好呀，有缘人"等)
+   - Direct interpretation without self-introduction
+   - Strict prohibition rules
 
 ### Knowledge Base (`src/lib/knowledge/`)
 - 70+ dream symbols with traditional interpretations
 - Conditions system (五行, 时辰, 反梦, 五不占)
 - AI prompts for Zhou Gong style interpretation
 
-## What's In Progress 🔄
-
-### Prompt Tuning
-- ✅ Removed Freud/Jung Western psychology
-- ✅ Added prohibition against AI fabricating user statements
-- ✅ Split into two endpoints (解梦 free, 指引 costs credits)
-
-### API Split Complete
-Two separate endpoints as requested:
-1. **`/api/interpret`** → FREE, generates 解梦 only (no guidance)
-2. **`/api/guidance`** → Costs 1 credit, generates 指引 only
-
-Both use streaming SSE format.
-
 ## What's Next 🔜
 
-### Immediate (Based on User Feedback)
-1. ✅ ~~Decide unlock flow~~ - Two-step with credits implemented
-2. ✅ ~~Create `/api/guidance` endpoint~~ - Done with credit deduction
-3. **Update `AIInterpretation` component** to show unlock button for 指引
+### Testing
+1. Test full flow end-to-end (logged in user)
+2. Test credit deduction for 指引
+3. Test share functionality on mobile
+4. Test auth flow (OAuth buttons)
 
-### Then
-4. Test full flow end-to-end
-5. Auth integration (OAuth buttons working)
-6. Polish UI/UX
+### Polish
+5. UI/UX refinements based on testing
+6. Error handling edge cases
+7. Performance optimization
 
 ## Key Architecture Decisions
 - **AI Provider**: Gemini 3 Pro default (70%), Claude backup (30%)
@@ -90,8 +94,7 @@ All configured:
 - `AI_DEFAULT_PROVIDER=gemini`
 
 ## Known Issues
-- AI sometimes still mentions things user didn't say (prompt issue)
-- Unlock flow not implemented yet
+- None critical at this time
 
 ## Session History
 | Date | Focus | Outcome |
@@ -102,9 +105,11 @@ All configured:
 | 2026-01-11 | APIs | interpret, dreams, symbols, credits |
 | 2026-01-11 | UI | DreamForm, AIInterpretation, 2-tab design |
 | 2026-01-11 | Prompt | Remove Freud/Jung, fix hallucination |
+| 2026-01-11 | Split API | interpret (free) + guidance (credits) |
+| 2026-01-11 | Share | modern-screenshot, mobile share |
 
 ## Resume Command
 ```
 Resume work on AI周公解梦. Read handoffs/HANDOFF.md first.
-Next: Decide on unlock flow (one-shot vs two-step with credits)
+Next: Test full flow end-to-end, polish UI
 ```
