@@ -407,3 +407,21 @@ html.theme-transition *::after {
 input, textarea, select {
   font-size: 16px !important; /* Prevent iOS zoom */
 }
+
+/* ================================================
+   Export/Share Utilities
+   ================================================ */
+
+/* Elements hidden during image export */
+.export-hide {
+  /* Marker class - visibility controlled via JS during export */
+}
+
+/* Watermark - hidden by default, shown during export */
+.watermark {
+  display: none;
+}
+
+.watermark.watermark-visible {
+  display: block;
+}

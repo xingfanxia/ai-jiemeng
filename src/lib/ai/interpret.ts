@@ -13,6 +13,7 @@ import { getProvider } from './providers';
 import { getABTestConfig, selectProvider } from './config';
 import {
   MULTI_PERSPECTIVE_SYSTEM_PROMPT,
+  GUIDANCE_SYSTEM_PROMPT,
   generateDreamInterpretationPrompt,
   detectSensitiveContent,
   SENSITIVE_TOPICS,
@@ -408,4 +409,78 @@ export async function getDreamInterpretation(
     provider: providerName,
     usage: response.usage,
   };
+}
+
+// ==================== Guidance Generation ====================
+
+/**
+ * Request for guidance generation
+ */
+export interface GuidanceRequest {
+  /** Original dream content */
+  dreamContent: string;
+  /** The interpretation that was generated */
+  interpretation: string;
+  /** Dream ID (for reference) */
+  dreamId?: string;
+}
+
+/**
+ * Build user prompt for guidance generation
+ */
+export function buildGuidancePrompt(request: GuidanceRequest): string {
+  return `## 原始梦境
+${request.dreamContent}
+
+## 已有的解读
+${request.interpretation}
+
+请基于以上梦境解读，为用户提供个人化的指引和建议。`;
+}
+
+/**
+ * Stream guidance generation from AI
+ */
+export async function* streamGuidance(
+  request: GuidanceRequest
+): AsyncGenerator<{ content: string; done: boolean; provider?: string; usage?: { inputTokens: number; outputTokens: number } }, void, unknown> {
+  // Build messages
+  const userPrompt = buildGuidancePrompt(request);
+  const messages: AIMessage[] = [
+    { role: 'user', content: userPrompt },
+  ];
+
+  // Select provider with A/B testing
+  const { provider: providerType, providerName } = selectInterpretationProvider();
+
+  console.log(`[Dream Guidance] Using provider: ${providerName}`);
+
+  // Get the provider instance
+  const provider = getProvider(providerType);
+
+  // Check if streaming is available
+  if (!provider.chatStream) {
+    throw new Error(`Provider ${providerType} does not support streaming`);
+  }
+
+  // Request options
+  const options: AIRequestOptions = {
+    systemPrompt: GUIDANCE_SYSTEM_PROMPT,
+    maxTokens: 1500,
+    temperature: 0.7,
+  };
+
+  // Yield provider info first
+  yield { content: '', done: false, provider: providerName };
+
+  // Stream the response
+  const stream = provider.chatStream(messages, options);
+
+  for await (const chunk of stream) {
+    yield {
+      content: chunk.content,
+      done: chunk.done,
+      usage: chunk.usage,
+    };
+  }
 }

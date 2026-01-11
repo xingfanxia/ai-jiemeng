@@ -21,6 +21,7 @@ export {
   PSYCHOLOGICAL_INTERPRETATION_SYSTEM_PROMPT,
   MULTI_PERSPECTIVE_SYSTEM_PROMPT,
   CARDS_INTERPRETATION_SYSTEM_PROMPT,
+  GUIDANCE_SYSTEM_PROMPT,
   // Prompt Generators
   generateDreamInterpretationPrompt,
   generateSymbolLookupPrompt,

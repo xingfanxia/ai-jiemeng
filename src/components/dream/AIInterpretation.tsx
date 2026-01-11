@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Sparkles, RefreshCw, Share2, Loader2, BookOpen, Compass } from 'lucide-react';
+import { Sparkles, RefreshCw, Share2, Download, Loader2, BookOpen, Compass, Lock } from 'lucide-react';
+import { domToPng } from 'modern-screenshot';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -232,8 +233,24 @@ export function AIInterpretation({
   const [fortune, setFortune] = useState<FortuneType | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
+  // Guidance state (two-step unlock flow)
+  const [guidanceLocked, setGuidanceLocked] = useState(true);
+  const [guidanceContent, setGuidanceContent] = useState('');
+  const [guidanceLoading, setGuidanceLoading] = useState(false);
+  const [guidanceError, setGuidanceError] = useState<string | null>(null);
+  
+  // Store interpretation text for passing to guidance API
+  const [interpretationText, setInterpretationText] = useState('');
+
   const contentRef = useRef<HTMLDivElement>(null);
+  const guidanceContentRef = useRef<HTMLDivElement>(null);
+  const exportAreaRef = useRef<HTMLDivElement>(null);
   const hasStarted = useRef(false);
+
+  // Check if native share is available (mobile)
+  const canShare = typeof navigator !== 'undefined' &&
+    typeof navigator.share === 'function' &&
+    typeof navigator.canShare === 'function';
 
   // Typewriter effect for streaming display
   const { displayedText, isAnimating, appendToBuffer, reset: resetTypewriter, flush } = useTypewriter({
@@ -250,6 +267,11 @@ export function AIInterpretation({
     setIsLoading(true);
     setError(null);
     resetTypewriter();
+    setInterpretationText('');
+    // Reset guidance state when re-interpreting
+    setGuidanceLocked(true);
+    setGuidanceContent('');
+    setGuidanceError(null);
 
     try {
       const res = await fetch('/api/interpret', {
@@ -316,6 +338,8 @@ export function AIInterpretation({
 
                 if (data.done) {
                   flush();
+                  // Store interpretation text for guidance API
+                  setInterpretationText(fullText);
                   if (data.interpretation && data.symbols) {
                     onComplete?.(data.interpretation, data.symbols);
                   }
@@ -341,6 +365,89 @@ export function AIInterpretation({
     }
   }, [dreamContent, mood, context, appendToBuffer, resetTypewriter, flush, onComplete, isLoading]);
 
+  // Fetch guidance from API (unlock flow)
+  const fetchGuidance = useCallback(async () => {
+    if (guidanceLoading || !interpretationText || !dreamContent.trim()) return;
+
+    setGuidanceLoading(true);
+    setGuidanceError(null);
+    setGuidanceContent('');
+
+    try {
+      const res = await fetch('/api/guidance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dreamContent,
+          interpretation: interpretationText,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        // Handle specific error codes
+        if (data.code === 'UNAUTHORIZED') {
+          setGuidanceError('请先登录后再解锁指引');
+          return;
+        }
+        if (data.code === 'INSUFFICIENT_CREDITS') {
+          setGuidanceError(`积分不足，当前剩余 ${data.remaining_credits ?? 0} 积分`);
+          return;
+        }
+        throw new Error(data.error || '获取指引失败');
+      }
+
+      // Unlock immediately when request is accepted
+      setGuidanceLocked(false);
+
+      // Handle SSE streaming response
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      let sseBuffer = '';
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          sseBuffer += chunk;
+
+          // Process complete lines
+          const lines = sseBuffer.split('\n');
+          sseBuffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const jsonStr = line.slice(6);
+                if (!jsonStr.trim()) continue;
+                const data = JSON.parse(jsonStr);
+
+                // Handle text chunks
+                if (data.type === 'text' && data.content) {
+                  setGuidanceContent(prev => prev + data.content);
+                }
+
+                if (data.type === 'error') {
+                  setGuidanceError(data.error || '获取指引失败');
+                  break;
+                }
+              } catch (e) {
+                // Skip partial chunks
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Guidance error:', e);
+      setGuidanceError(e instanceof Error ? e.message : '获取指引失败，请重试');
+    } finally {
+      setGuidanceLoading(false);
+    }
+  }, [dreamContent, interpretationText, guidanceLoading]);
+
   // Auto-start if enabled
   useEffect(() => {
     if (autoStart && !hasStarted.current && dreamContent) {
@@ -349,61 +456,130 @@ export function AIInterpretation({
     }
   }, [autoStart, dreamContent, fetchInterpretation]);
 
-  // Auto-scroll as content streams
+  // Auto-scroll as content streams (interpretation)
   useEffect(() => {
     if (contentRef.current && (isLoading || isAnimating)) {
       contentRef.current.scrollTop = contentRef.current.scrollHeight;
     }
   }, [displayedText, isLoading, isAnimating]);
 
-  // Export handler
+  // Auto-scroll as guidance content streams
+  useEffect(() => {
+    if (guidanceContentRef.current && guidanceLoading) {
+      guidanceContentRef.current.scrollTop = guidanceContentRef.current.scrollHeight;
+    }
+  }, [guidanceContent, guidanceLoading]);
+
+  // Export handler - captures image and shares/downloads
   const handleExport = async () => {
-    if (isExporting) return;
+    if (isExporting || !exportAreaRef.current) return;
     setIsExporting(true);
 
     try {
-      // Use Web Share API if available
-      if (navigator.share) {
+      const element = exportAreaRef.current;
+
+      // Hide elements that shouldn't appear in export
+      const hideElements = element.querySelectorAll('.export-hide');
+      hideElements.forEach(el => {
+        (el as HTMLElement).style.display = 'none';
+      });
+
+      // Show watermark
+      const watermarks = element.querySelectorAll('.watermark');
+      watermarks.forEach(el => {
+        el.classList.add('watermark-visible');
+      });
+
+      // Detect dark mode for background color
+      const isDark = document.documentElement.classList.contains('dark');
+      const bgColor = isDark ? '#0f0f14' : '#fafafc';
+
+      // Capture with modern-screenshot at 2x scale
+      const dataUrl = await domToPng(element, {
+        scale: 2,
+        backgroundColor: bgColor,
+        style: {
+          padding: '24px',
+        },
+      });
+
+      // Restore hidden elements
+      hideElements.forEach(el => {
+        (el as HTMLElement).style.display = '';
+      });
+
+      // Hide watermark again
+      watermarks.forEach(el => {
+        el.classList.remove('watermark-visible');
+      });
+
+      // Convert dataUrl to blob for sharing
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], 'dream-interpretation.png', { type: 'image/png' });
+
+      // Try native share first (mobile)
+      if (canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           title: 'AI 解梦结果',
-          text: displayedText,
+          text: '周公解梦 - 解读您的梦境',
+          files: [file],
         });
       } else {
-        // Fallback to clipboard
-        await navigator.clipboard.writeText(displayedText);
-        alert('解梦结果已复制到剪贴板');
+        // Fallback to download
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = `dream-interpretation-${new Date().toISOString().slice(0, 10)}.png`;
+        link.click();
       }
     } catch (e) {
       console.error('Export failed:', e);
+      // Restore elements on error
+      if (exportAreaRef.current) {
+        const hideElements = exportAreaRef.current.querySelectorAll('.export-hide');
+        hideElements.forEach(el => {
+          (el as HTMLElement).style.display = '';
+        });
+        const watermarks = exportAreaRef.current.querySelectorAll('.watermark');
+        watermarks.forEach(el => {
+          el.classList.remove('watermark-visible');
+        });
+      }
     } finally {
       setIsExporting(false);
     }
   };
 
-  // Split content by --- separator
-  const [interpretationContent, guidanceContent] = (() => {
-    if (!displayedText) return ['', ''];
-    const parts = displayedText.split(/\n---\n|\n---|\n-{3,}\n/);
-    return [parts[0]?.trim() || '', parts[1]?.trim() || ''];
-  })();
+  // Check if interpretation is complete and ready for guidance
+  const canUnlockGuidance = !!interpretationText && !isLoading && !isAnimating;
 
   const cardContent = (
-    <div className="space-y-4">
+    <div ref={exportAreaRef} className="space-y-4">
+      {/* Watermark - hidden by default, shown during export */}
+      <div className="watermark">
+        <div className="flex items-center justify-center gap-2 py-3 border-b border-border mb-4">
+          <Sparkles className="w-5 h-5 text-primary" />
+          <span className="text-lg font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            周公解梦
+          </span>
+        </div>
+      </div>
+
       {/* Two Tabs: 解梦 + 指引 */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabId)}>
         <TabsList className="grid w-full grid-cols-2 h-11">
           {Object.entries(TABS).map(([id, tab]) => {
             const Icon = tab.icon;
-            const hasContent = id === 'interpretation' ? !!interpretationContent : !!guidanceContent;
             return (
               <TabsTrigger
                 key={id}
                 value={id}
                 className="flex items-center gap-2 text-sm"
-                disabled={!hasContent && !isLoading && id === 'guidance'}
               >
                 <Icon className={`w-4 h-4 ${tab.color}`} />
                 {tab.label}
+                {id === 'guidance' && guidanceLocked && canUnlockGuidance && (
+                  <Lock className="w-3 h-3 text-muted-foreground" />
+                )}
               </TabsTrigger>
             );
           })}
@@ -452,15 +628,15 @@ export function AIInterpretation({
           )}
 
           {/* Interpretation Content */}
-          {(interpretationContent || isLoading) && (
+          {(displayedText || isLoading) && (
             <div
               ref={contentRef}
               className="min-h-[200px] max-h-[60vh] overflow-y-auto rounded-lg bg-secondary/20 p-4 scroll-smooth"
             >
-              {interpretationContent ? (
+              {displayedText ? (
                 <div className="space-y-4">
-                  <MarkdownText content={interpretationContent} />
-                  {(isLoading || isAnimating) && !guidanceContent && (
+                  <MarkdownText content={displayedText} />
+                  {(isLoading || isAnimating) && (
                     <span className="inline-block w-2 h-4 ml-1 bg-primary animate-pulse rounded-sm" />
                   )}
                 </div>
@@ -481,16 +657,43 @@ export function AIInterpretation({
 
         {/* 指引 Tab */}
         <TabsContent value="guidance" className="mt-4">
-          {guidanceContent ? (
-            <div className="min-h-[200px] max-h-[60vh] overflow-y-auto rounded-lg bg-secondary/20 p-4 scroll-smooth">
-              <div className="space-y-4">
-                <MarkdownText content={guidanceContent} />
-                {(isLoading || isAnimating) && (
-                  <span className="inline-block w-2 h-4 ml-1 bg-primary animate-pulse rounded-sm" />
-                )}
+          {/* Locked State */}
+          {guidanceLocked && !guidanceLoading && (
+            <div className="flex flex-col items-center justify-center py-8 gap-4">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center">
+                <Lock className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />
               </div>
+              <div className="text-center space-y-2">
+                <p className="text-foreground font-medium">解锁后查看周公指引</p>
+                <p className="text-xs text-muted-foreground/60">
+                  获取基于您梦境的个人化运势指引
+                </p>
+              </div>
+              {guidanceError && (
+                <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm text-center max-w-xs">
+                  {guidanceError}
+                </div>
+              )}
+              <Button
+                onClick={fetchGuidance}
+                variant="dream"
+                size="lg"
+                className="gap-2 touch-feedback"
+                disabled={!canUnlockGuidance}
+              >
+                <Compass className="w-5 h-5" />
+                解锁指引 (1积分)
+              </Button>
+              {!canUnlockGuidance && !guidanceError && (
+                <p className="text-xs text-muted-foreground">
+                  请先完成解梦后再解锁指引
+                </p>
+              )}
             </div>
-          ) : isLoading ? (
+          )}
+
+          {/* Loading State */}
+          {guidanceLoading && !guidanceContent && (
             <div className="flex flex-col items-center justify-center h-[200px]">
               <div className="relative">
                 <div className="w-12 h-12 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
@@ -500,10 +703,20 @@ export function AIInterpretation({
               </div>
               <p className="text-sm text-muted-foreground mt-4">正在生成运势指引...</p>
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-              <Compass className="w-10 h-10 mb-2 opacity-50" />
-              <p>完成解梦后查看指引</p>
+          )}
+
+          {/* Guidance Content (unlocked) */}
+          {!guidanceLocked && guidanceContent && (
+            <div
+              ref={guidanceContentRef}
+              className="min-h-[200px] max-h-[60vh] overflow-y-auto rounded-lg bg-secondary/20 p-4 scroll-smooth"
+            >
+              <div className="space-y-4">
+                <MarkdownText content={guidanceContent} />
+                {guidanceLoading && (
+                  <span className="inline-block w-2 h-4 ml-1 bg-primary animate-pulse rounded-sm" />
+                )}
+              </div>
             </div>
           )}
         </TabsContent>
@@ -531,9 +744,9 @@ export function AIInterpretation({
         </div>
       )}
 
-      {/* Action Buttons */}
+      {/* Action Buttons - hidden in export */}
       {displayedText && !isLoading && (
-        <div className="flex gap-2 pt-2">
+        <div className="export-hide flex gap-2 pt-2">
           <Button
             variant="outline"
             className="flex-1 touch-feedback"
@@ -542,10 +755,12 @@ export function AIInterpretation({
           >
             {isExporting ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
+            ) : canShare ? (
               <Share2 className="w-4 h-4 mr-2" />
+            ) : (
+              <Download className="w-4 h-4 mr-2" />
             )}
-            分享结果
+            {canShare ? '分享' : '保存图片'}
           </Button>
           <Button
             variant="outline"
@@ -559,10 +774,22 @@ export function AIInterpretation({
         </div>
       )}
 
-      {/* Disclaimer */}
+      {/* Disclaimer - shown always */}
       <p className="text-xs text-center text-muted-foreground/60 pt-2">
         AI 解梦仅供参考娱乐，不构成任何建议
       </p>
+
+      {/* Export watermark footer - hidden by default, shown during export */}
+      <div className="watermark">
+        <div className="pt-4 mt-4 border-t border-border text-center space-y-1">
+          <p className="text-xs text-muted-foreground">
+            {new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}
+          </p>
+          <p className="text-xs text-muted-foreground/60">
+            周公解梦 AI - 解读您的梦境
+          </p>
+        </div>
+      </div>
     </div>
   );
 

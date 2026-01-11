@@ -3,11 +3,11 @@
  *
  * POST /api/interpret
  *
- * Streaming endpoint for AI-powered dream interpretation.
- * Uses multi-perspective analysis combining:
- * - Zhou Gong (周公解梦) traditional Chinese interpretation
- * - Freudian psychoanalysis
- * - Jungian analytical psychology
+ * FREE streaming endpoint for AI-powered dream interpretation.
+ * Uses Zhou Gong (周公解梦) traditional Chinese interpretation.
+ *
+ * NOTE: This endpoint ONLY generates the interpretation (解梦) part.
+ * For guidance (指引), users need to call /api/guidance which costs credits.
  *
  * Request body:
  * {
@@ -22,7 +22,7 @@
  *   }
  * }
  *
- * Response: Streaming text with multi-perspective interpretation
+ * Response: Streaming text with dream interpretation (no guidance)
  */
 
 import { NextRequest } from 'next/server';

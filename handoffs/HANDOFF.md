@@ -27,7 +27,8 @@
 ### APIs
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
-| `/api/interpret` | POST | Streaming AI dream interpretation |
+| `/api/interpret` | POST | FREE streaming AI dream interpretation (解梦 only) |
+| `/api/guidance` | POST | Streaming AI guidance (指引), costs 1 credit |
 | `/api/dreams` | GET/POST | List & create dreams |
 | `/api/dreams/[id]` | GET/PUT/DELETE | Single dream CRUD |
 | `/api/symbols` | GET | Search symbol dictionary |
@@ -52,24 +53,21 @@
 ### Prompt Tuning
 - ✅ Removed Freud/Jung Western psychology
 - ✅ Added prohibition against AI fabricating user statements
-- ✅ Two-tab design (解梦 + 指引) with `---` separator
-- ⏳ User wants unlock logic like bazi-app (指引 costs credits)
+- ✅ Split into two endpoints (解梦 free, 指引 costs credits)
 
-### Pending Decision: Unlock Flow
-User wants two-step like bazi-app:
-1. **解梦** → Free, auto-generated
-2. **指引** → Locked, costs 1 credit to unlock
+### API Split Complete
+Two separate endpoints as requested:
+1. **`/api/interpret`** → FREE, generates 解梦 only (no guidance)
+2. **`/api/guidance`** → Costs 1 credit, generates 指引 only
 
-Options discussed:
-- Current: Both generated together, split by `---`
-- Bazi-style: Two separate API calls, 指引 requires credit deduction
+Both use streaming SSE format.
 
 ## What's Next 🔜
 
 ### Immediate (Based on User Feedback)
-1. **Decide unlock flow** - One-shot vs two-step with credits
-2. If two-step: Create `/api/guidance` endpoint with credit deduction
-3. Update `AIInterpretation` component to show unlock button
+1. ✅ ~~Decide unlock flow~~ - Two-step with credits implemented
+2. ✅ ~~Create `/api/guidance` endpoint~~ - Done with credit deduction
+3. **Update `AIInterpretation` component** to show unlock button for 指引
 
 ### Then
 4. Test full flow end-to-end
