@@ -301,7 +301,12 @@ export function AIInterpretation({
                 if (!jsonStr.trim()) continue;
                 const data = JSON.parse(jsonStr);
 
-                if (data.text) {
+                // Handle text chunks (API sends { type: 'text', content: '...' })
+                if (data.type === 'text' && data.content) {
+                  fullText += data.content;
+                  appendToBuffer(data.content);
+                } else if (data.text) {
+                  // Fallback for legacy format
                   fullText += data.text;
                   appendToBuffer(data.text);
                 }
