@@ -159,9 +159,32 @@ function parseChineseTime(timeStr: string): TimeOfDay | undefined {
 }
 
 /**
+ * Get season from date string (ISO format: YYYY-MM-DD)
+ */
+function getSeasonFromDate(dateStr?: string): 'spring' | 'summer' | 'autumn' | 'winter' {
+  let month: number;
+  
+  if (dateStr) {
+    const date = new Date(dateStr);
+    if (!isNaN(date.getTime())) {
+      month = date.getMonth() + 1;
+    } else {
+      month = new Date().getMonth() + 1;
+    }
+  } else {
+    month = new Date().getMonth() + 1;
+  }
+  
+  if (month >= 2 && month <= 4) return 'spring';
+  if (month >= 5 && month <= 7) return 'summer';
+  if (month >= 8 && month <= 10) return 'autumn';
+  return 'winter';
+}
+
+/**
  * Get time context string
  */
-function getTimeContextString(dreamTime?: string): string {
+function getTimeContextString(dreamTime?: string, dreamDate?: string): string {
   let timeOfDay: TimeOfDay;
 
   if (dreamTime) {
@@ -171,7 +194,8 @@ function getTimeContextString(dreamTime?: string): string {
     timeOfDay = getCurrentTimeOfDay();
   }
 
-  const season = getCurrentSeason();
+  // Use dreamDate for season if provided, otherwise current date
+  const season = getSeasonFromDate(dreamDate);
   return getDreamTimeContext(timeOfDay, season);
 }
 
@@ -185,10 +209,10 @@ export function buildInterpretationContext(request: InterpretationRequest): Inte
   const extractedSymbols = extractSymbols(request.content);
 
   // Build time context
-  const timeContext = getTimeContextString(request.dreamTime);
+  const timeContext = getTimeContextString(request.dreamTime, request.dreamDate);
 
-  // Get season name
-  const season = getCurrentSeason();
+  // Get season name (use dreamDate if provided)
+  const season = getSeasonFromDate(request.dreamDate);
   const seasonNames: Record<string, string> = {
     spring: '春季',
     summer: '夏季',
