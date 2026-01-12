@@ -494,6 +494,14 @@ export function AIInterpretation({
       const exportHideElements = element.querySelectorAll('.export-hide');
       const watermarkElement = element.querySelector('.watermark');
 
+      // Expand scrollable content areas to show full content (critical for screenshot)
+      const scrollableElements = element.querySelectorAll('.overflow-y-auto');
+      scrollableElements.forEach((el) => {
+        const htmlEl = el as HTMLElement;
+        htmlEl.style.setProperty('max-height', 'none', 'important');
+        htmlEl.style.setProperty('overflow', 'visible', 'important');
+      });
+
       exportHideElements.forEach(el => ((el as HTMLElement).style.display = 'none'));
       if (watermarkElement) watermarkElement.classList.add('watermark-visible');
 
@@ -504,9 +512,14 @@ export function AIInterpretation({
         backgroundColor: isDark ? '#1a1512' : '#faf8f5',
       });
 
-      // Restore hidden elements
+      // Restore hidden elements and scrollable containers
       exportHideElements.forEach(el => ((el as HTMLElement).style.display = ''));
       if (watermarkElement) watermarkElement.classList.remove('watermark-visible');
+      scrollableElements.forEach((el) => {
+        const htmlEl = el as HTMLElement;
+        htmlEl.style.removeProperty('max-height');
+        htmlEl.style.removeProperty('overflow');
+      });
 
       const timestamp = Date.now();
       const fullFilename = `周公解梦-${timestamp}.png`;
