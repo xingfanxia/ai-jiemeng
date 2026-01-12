@@ -492,7 +492,7 @@ export function AIInterpretation({
 
       // Hide export-hide elements and show watermark
       const exportHideElements = element.querySelectorAll('.export-hide');
-      const watermarkElement = element.querySelector('.watermark');
+      const watermarkElements = element.querySelectorAll('.watermark');
 
       // Expand scrollable content areas to show full content (critical for screenshot)
       const scrollableElements = element.querySelectorAll('.overflow-y-auto');
@@ -503,7 +503,7 @@ export function AIInterpretation({
       });
 
       exportHideElements.forEach(el => ((el as HTMLElement).style.display = 'none'));
-      if (watermarkElement) watermarkElement.classList.add('watermark-visible');
+      watermarkElements.forEach(el => el.classList.add('watermark-visible'));
 
       // Capture screenshot with dark/light mode support
       const isDark = document.documentElement.classList.contains('dark');
@@ -514,7 +514,7 @@ export function AIInterpretation({
 
       // Restore hidden elements and scrollable containers
       exportHideElements.forEach(el => ((el as HTMLElement).style.display = ''));
-      if (watermarkElement) watermarkElement.classList.remove('watermark-visible');
+      watermarkElements.forEach(el => el.classList.remove('watermark-visible'));
       scrollableElements.forEach((el) => {
         const htmlEl = el as HTMLElement;
         htmlEl.style.removeProperty('max-height');
