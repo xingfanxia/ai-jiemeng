@@ -1,6 +1,6 @@
 # Handoff: AI周公解梦App
 
-## Last Updated: 2026-01-11
+## Last Updated: 2026-01-12
 
 ## Core References
 | Document | Path | Purpose |
@@ -12,12 +12,12 @@
 
 ## Current State
 - **Phase**: Core Development Complete
-- **Progress**: All features working, cost logging added
+- **Progress**: All features working, export bug fixed
 - **Branch**: main
-- **Last Commit**: 953a024 - Rewrite export to match bazi-app pattern
+- **Last Commit**: 2228218 - Replace emojis with Lucide icons to fix Safari/WeChat export
 - **Live**: https://jiemeng.ax0x.ai
 
-## What's Done ✅
+## What's Done
 
 ### Infrastructure
 - **GitHub**: https://github.com/xingfanxia/ai-jiemeng
@@ -38,10 +38,10 @@
 | `/auth/callback` | GET | OAuth callback handler | - |
 
 ### UI Components
-- `DreamForm` - Dream input with 十二时辰, mood, context
+- `DreamForm` - Dream input with 十二时辰, multi-select mood (Lucide icons), context
 - `AIInterpretation` - 2 tabs (解梦 + 指引), streaming display, two-step unlock
 - `SymbolCard` - Symbol details
-- `DreamJournal` - Saved dreams list
+- `DreamJournal` - Saved dreams list with mood icons
 - `FortuneIndicator` - 大吉/吉/中平/凶/大凶 badge
 
 ### Features Completed
@@ -51,19 +51,24 @@
    - Clicking unlock calls `/api/guidance`, deducts 1 credit
    - Credits refresh after unlock
 
-2. **Share functionality** (same as bazi-app):
+2. **Share functionality** (matching bazi-app):
    - Uses `modern-screenshot` (domToPng)
    - Mobile: native share via Web Share API
    - Desktop: downloads PNG (`周公解梦-timestamp.png`)
-   - Watermark with branding
+   - Watermark with branding (header + footer)
+   - **No emojis** - uses Lucide icons for Safari/WeChat compatibility
 
-3. **Prompt style**:
-   - 优雅古韵, can quote classical texts
-   - NO intro ("你好呀，有缘人" removed)
-   - Direct interpretation
-   - Prohibitions: Freud/Jung, fabrication, scary language
+3. **Multi-select mood**:
+   - Users can select multiple emotions for complex dreams
+   - Uses Lucide icons instead of emojis
+   - Icons: CloudSun, Smile, AlertTriangle, Ghost, HelpCircle, Compass, History, HeartHandshake, Eye, Minus
 
-4. **Cost Logging** (shared `llm_costs` table with bazi-app):
+4. **Advanced options fully working**:
+   - 做梦日期 → affects season calculation (春夏秋冬)
+   - 做梦时辰 → affects time context
+   - 性别/孕妇 → passed to AI for context
+
+5. **Cost Logging** (shared `llm_costs` table with bazi-app):
    - Logs to Supabase `llm_costs` table
    - `app = 'dream'`
    - Endpoints: `interpret`, `guidance`
@@ -72,28 +77,18 @@
 ### Knowledge Base (`src/lib/knowledge/`)
 - 70+ dream symbols with traditional interpretations
 - Conditions system (五行, 时辰, 反梦, 五不占)
-- AI prompts for Zhou Gong style interpretation
+- AI prompts for Zhou Gong style interpretation (no emojis)
 
-## Bug Fixes This Session
-1. ✅ Guidance unlock button disabled after interpretation complete → Fixed `data.type === 'done'` check
-2. ✅ Share/download not working → Rewrote to match bazi-app pattern exactly
-3. ✅ Credits not refreshing after unlock → Added `refreshCredits()` call
-4. ✅ Prompt too literary → Restored original style, only removed intro
+## Bug Fixes This Session (2026-01-12)
 
-## Cost Logging Setup
-
-For dashboard integration:
-- **Table**: `llm_costs` (shared with bazi-app)
-- **App identifier**: `app = 'dream'`
-- **Endpoints**: `interpret` (free), `guidance` (1 credit)
-- **Providers**: `gemini` (primary), `claude` (backup)
-
-Sample query:
-```sql
-SELECT DATE(created_at), endpoint, COUNT(*), SUM(estimated_cost)
-FROM llm_costs WHERE app = 'dream'
-GROUP BY DATE(created_at), endpoint;
-```
+| Bug | Root Cause | Fix |
+|-----|------------|-----|
+| Export fails on Safari/WeChat | Emojis cause canvas rendering failure | Replaced all emojis with Lucide icons |
+| Only first watermark shows | `querySelector` only gets first element | Changed to `querySelectorAll` |
+| Scrollable area truncated in export | Container not expanded | Added scroll expansion logic |
+| dreamDate not affecting season | Season always used current date | Added `getSeasonFromDate()` function |
+| Mood single-select | User request for multi-select | Changed to array with toggle |
+| Char count shows "5,000" | toLocaleString comma confusing | Changed to "5000字" format |
 
 ## Key Architecture Decisions
 - **AI Provider**: Gemini 3 Pro default (70%), Claude backup (30%)
@@ -102,6 +97,7 @@ GROUP BY DATE(created_at), endpoint;
 - **Auth**: Supabase OAuth (shared with bazi-app)
 - **Credits**: Reuse bazi-app credit system (deduct_credit RPC)
 - **Cost Logging**: Shared `llm_costs` table with bazi-app
+- **Icons over Emojis**: All UI uses Lucide icons for cross-browser compatibility
 
 ## Environment Variables (Vercel)
 All configured:
@@ -111,8 +107,8 @@ All configured:
 - `GEMINI_MODEL=gemini-3-pro-preview`
 - `AI_DEFAULT_PROVIDER=gemini`
 
-## What's Next 🔜
-1. Test full flow on mobile
+## What's Next
+1. Test export on Safari/WeChat (should be fixed now)
 2. Polish UI based on user feedback
 3. Add more dream symbols to knowledge base
 4. Dashboard integration (cost analytics)
@@ -130,6 +126,9 @@ All configured:
 | 2026-01-11 | Share | modern-screenshot, bazi-app pattern |
 | 2026-01-11 | Bugs | Fix unlock, share download, credits refresh |
 | 2026-01-11 | Logging | Add cost logging to llm_costs table |
+| 2026-01-12 | Mood | Multi-select moods, clearer char count |
+| 2026-01-12 | dreamDate | Fix season calculation from dream date |
+| 2026-01-12 | Export | Fix Safari/WeChat - replace emojis with Lucide icons |
 
 ## Resume Command
 ```
