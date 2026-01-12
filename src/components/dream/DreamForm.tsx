@@ -1,7 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Moon, Send, Calendar, Clock, User, Heart, Sparkles } from 'lucide-react';
+import { 
+  Moon, Send, Calendar, Clock, User, Heart, Sparkles,
+  // Mood icons
+  CloudSun, Smile, AlertTriangle, Ghost, HelpCircle, 
+  Compass, History, HeartHandshake, Eye, Minus
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -34,19 +39,20 @@ const SHICHEN_OPTIONS = [
 ] as const;
 
 /**
- * Mood options with Chinese labels
+ * Mood options with Chinese labels and Lucide icons
+ * Using icons instead of emojis to avoid Safari/WeChat rendering issues
  */
-const MOOD_OPTIONS: { value: DreamMood; label: string; emoji: string }[] = [
-  { value: 'peaceful', label: '平静', emoji: '😌' },
-  { value: 'joyful', label: '喜悦', emoji: '😊' },
-  { value: 'anxious', label: '焦虑', emoji: '😰' },
-  { value: 'fearful', label: '恐惧', emoji: '😨' },
-  { value: 'confused', label: '困惑', emoji: '😕' },
-  { value: 'adventurous', label: '冒险', emoji: '🤩' },
-  { value: 'nostalgic', label: '怀旧', emoji: '🥹' },
-  { value: 'romantic', label: '浪漫', emoji: '🥰' },
-  { value: 'mysterious', label: '神秘', emoji: '🔮' },
-  { value: 'neutral', label: '中性', emoji: '😐' },
+const MOOD_OPTIONS: { value: DreamMood; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { value: 'peaceful', label: '平静', icon: CloudSun },
+  { value: 'joyful', label: '喜悦', icon: Smile },
+  { value: 'anxious', label: '焦虑', icon: AlertTriangle },
+  { value: 'fearful', label: '恐惧', icon: Ghost },
+  { value: 'confused', label: '困惑', icon: HelpCircle },
+  { value: 'adventurous', label: '冒险', icon: Compass },
+  { value: 'nostalgic', label: '怀旧', icon: History },
+  { value: 'romantic', label: '浪漫', icon: HeartHandshake },
+  { value: 'mysterious', label: '神秘', icon: Eye },
+  { value: 'neutral', label: '中性', icon: Minus },
 ];
 
 export interface DreamFormData {
@@ -174,7 +180,9 @@ export function DreamForm({ onSubmit, isLoading = false, initialData }: DreamFor
                   }`}
                   disabled={isLoading}
                 >
-                  <span className="mr-1">{option.emoji}</span>
+                  <span className="mr-1">
+                    <option.icon className="w-4 h-4 inline-block" />
+                  </span>
                   {option.label}
                 </button>
               ))}

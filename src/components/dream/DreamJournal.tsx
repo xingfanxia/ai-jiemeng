@@ -3,7 +3,12 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { BookOpen, Calendar, Heart, Trash2, ChevronRight, Loader2, Search, X } from 'lucide-react';
+import { 
+  BookOpen, Calendar, Heart, Trash2, ChevronRight, Loader2, Search, X,
+  // Mood icons (same as DreamForm)
+  CloudSun, Smile, AlertTriangle, Ghost, HelpCircle, 
+  Compass, History, HeartHandshake, Eye, Minus
+} from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,20 +24,26 @@ import type { DreamJournalEntry, DreamMood } from '@/lib/types/dream';
 import type { FortuneType } from '@/lib/knowledge/fortune';
 
 /**
- * Mood emoji mapping
+ * Mood icon mapping - using Lucide icons instead of emojis for Safari/WeChat compatibility
  */
-const MOOD_EMOJIS: Record<DreamMood, string> = {
-  peaceful: '😌',
-  anxious: '😰',
-  joyful: '😊',
-  fearful: '😨',
-  confused: '😕',
-  adventurous: '🤩',
-  nostalgic: '🥹',
-  romantic: '🥰',
-  mysterious: '🔮',
-  neutral: '😐',
+const MOOD_ICONS: Record<DreamMood, React.ComponentType<{ className?: string }>> = {
+  peaceful: CloudSun,
+  anxious: AlertTriangle,
+  joyful: Smile,
+  fearful: Ghost,
+  confused: HelpCircle,
+  adventurous: Compass,
+  nostalgic: History,
+  romantic: HeartHandshake,
+  mysterious: Eye,
+  neutral: Minus,
 };
+
+/** Helper to render mood icon */
+function MoodIcon({ mood, className }: { mood: DreamMood; className?: string }) {
+  const Icon = MOOD_ICONS[mood];
+  return Icon ? <Icon className={className || "w-4 h-4"} /> : null;
+}
 
 interface DreamJournalProps {
   /** Whether journal is visible (for drawer mode) */
@@ -145,7 +156,7 @@ export function DreamJournal({
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
               <Calendar className="w-3 h-3" />
               <span>{format(new Date(dream.createdAt), 'MM月dd日 HH:mm', { locale: zhCN })}</span>
-              {dream.mood && <span>{MOOD_EMOJIS[dream.mood]}</span>}
+              {dream.mood && <MoodIcon mood={dream.mood} />}
             </div>
 
             {/* Preview */}
@@ -419,7 +430,7 @@ export function DreamJournalList({
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Calendar className="w-3 h-3" />
             <span>{format(new Date(dream.createdAt), 'MM/dd', { locale: zhCN })}</span>
-            {dream.mood && <span>{MOOD_EMOJIS[dream.mood]}</span>}
+            {dream.mood && <MoodIcon mood={dream.mood} />}
           </div>
         </button>
       ))}
