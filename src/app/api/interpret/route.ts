@@ -14,7 +14,7 @@
  *   content: string;          // Dream description
  *   dreamDate?: string;       // For 时辰 calculation
  *   dreamTime?: string;       // Hour of dream (子时, 丑时, etc.)
- *   mood?: string;            // User's mood
+ *   moods?: string[];         // User's moods
  *   context?: {               // Additional context
  *     isPregnant?: boolean;
  *     occupation?: string;
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     // Accept both 'content' and 'dreamContent' field names
-    const { content, dreamContent, dreamDate, dreamTime, mood, context } = body;
+    const { content, dreamContent, dreamDate, dreamTime, moods, context } = body;
     const dreamText = content || dreamContent;
 
     // Validate required field
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       content: dreamText,
       dreamDate,
       dreamTime,
-      mood,
+      moods,  // Pass moods array
       context: context ? {
         isPregnant: context.isPregnant,
         occupation: context.occupation,

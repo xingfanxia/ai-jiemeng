@@ -11,7 +11,7 @@ import type { DreamSymbol, DreamInterpretation, DreamMood } from '@/lib/types/dr
 
 export default function Home() {
   const [dreamContent, setDreamContent] = useState('');
-  const [dreamMood, setDreamMood] = useState<DreamMood | undefined>();
+  const [dreamMoods, setDreamMoods] = useState<DreamMood[]>([]);
   const [dreamContext, setDreamContext] = useState<{
     gender?: 'male' | 'female' | 'other';
     isPregnant?: boolean;
@@ -28,7 +28,7 @@ export default function Home() {
     if (!data.dreamContent.trim()) return;
 
     setDreamContent(data.dreamContent);
-    setDreamMood(data.mood);
+    setDreamMoods(data.moods || []);
     setDreamContext({
       gender: data.gender,
       isPregnant: data.isPregnant,
@@ -51,7 +51,7 @@ export default function Home() {
   // Reset to start new interpretation
   const handleReset = useCallback(() => {
     setDreamContent('');
-    setDreamMood(undefined);
+    setDreamMoods([]);
     setDreamContext({});
     setShowResult(false);
     setInterpretation(null);
@@ -140,7 +140,7 @@ export default function Home() {
               {/* AI Interpretation */}
               <AIInterpretation
                 dreamContent={dreamContent}
-                mood={dreamMood}
+                mood={dreamMoods}
                 context={dreamContext}
                 autoStart={true}
                 onComplete={handleInterpretComplete}

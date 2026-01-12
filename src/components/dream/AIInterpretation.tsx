@@ -36,8 +36,8 @@ type TabId = keyof typeof TABS;
 interface AIInterpretationProps {
   /** The dream content being interpreted */
   dreamContent: string;
-  /** Optional mood for context */
-  mood?: DreamMood;
+  /** Optional moods for context (can be multiple) */
+  mood?: DreamMood[];
   /** Optional context (gender, pregnancy status, etc.) */
   context?: {
     gender?: 'male' | 'female' | 'other';
@@ -281,7 +281,7 @@ export function AIInterpretation({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           dreamContent,
-          mood,
+          moods: mood,  // Pass as moods array
           context,
         }),
       });

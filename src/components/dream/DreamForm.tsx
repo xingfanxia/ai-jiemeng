@@ -53,7 +53,7 @@ export interface DreamFormData {
   dreamContent: string;
   dreamDate?: string;
   dreamTime?: string;
-  mood?: DreamMood;
+  moods?: DreamMood[];  // Changed from mood?: DreamMood to support multi-select
   gender?: 'male' | 'female' | 'other';
   isPregnant?: boolean;
   context?: string;
@@ -71,12 +71,21 @@ export function DreamForm({ onSubmit, isLoading = false, initialData }: DreamFor
   const [dreamContent, setDreamContent] = useState(initialData?.dreamContent || '');
   const [dreamDate, setDreamDate] = useState(initialData?.dreamDate || '');
   const [dreamTime, setDreamTime] = useState(initialData?.dreamTime || '');
-  const [mood, setMood] = useState<DreamMood | undefined>(initialData?.mood);
+  const [moods, setMoods] = useState<DreamMood[]>(initialData?.moods || []);  // Changed to array
   const [gender, setGender] = useState<'male' | 'female' | 'other' | undefined>(
     initialData?.gender
   );
   const [isPregnant, setIsPregnant] = useState(initialData?.isPregnant || false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // Toggle mood in/out of selection
+  const toggleMood = (moodValue: DreamMood) => {
+    setMoods(prev => 
+      prev.includes(moodValue)
+        ? prev.filter(m => m !== moodValue)
+        : [...prev, moodValue]
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,7 +95,7 @@ export function DreamForm({ onSubmit, isLoading = false, initialData }: DreamFor
       dreamContent: dreamContent.trim(),
       dreamDate: dreamDate || undefined,
       dreamTime: dreamTime || undefined,
-      mood,
+      moods: moods.length > 0 ? moods : undefined,  // Changed from mood
       gender,
       isPregnant: gender === 'female' ? isPregnant : undefined,
     });
@@ -140,7 +149,7 @@ export function DreamForm({ onSubmit, isLoading = false, initialData }: DreamFor
                       : 'text-muted-foreground'
                 }`}
               >
-                {charCount.toLocaleString()} / {MAX_CHARS.toLocaleString()}
+                {charCount} / {MAX_CHARS}字
               </span>
             </div>
           </div>
@@ -150,16 +159,16 @@ export function DreamForm({ onSubmit, isLoading = false, initialData }: DreamFor
             <Label className="flex items-center gap-2">
               <Heart className="w-4 h-4 text-pink-500" />
               梦中情绪
-              <span className="text-muted-foreground text-xs">（可选）</span>
+              <span className="text-muted-foreground text-xs">（可多选）</span>
             </Label>
             <div className="flex flex-wrap gap-2">
               {MOOD_OPTIONS.map((option) => (
                 <button
                   key={option.value}
                   type="button"
-                  onClick={() => setMood(mood === option.value ? undefined : option.value)}
+                  onClick={() => toggleMood(option.value)}
                   className={`px-3 py-1.5 rounded-full text-sm transition-all touch-feedback ${
-                    mood === option.value
+                    moods.includes(option.value)
                       ? 'bg-primary text-primary-foreground shadow-md'
                       : 'bg-secondary/50 text-secondary-foreground hover:bg-secondary'
                   }`}

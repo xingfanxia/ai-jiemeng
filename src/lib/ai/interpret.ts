@@ -40,8 +40,8 @@ export interface InterpretationRequest {
   dreamDate?: string;
   /** Hour of dream in traditional Chinese time (子时, 丑时, etc.) */
   dreamTime?: string;
-  /** User's mood */
-  mood?: string;
+  /** User's moods (can be multiple) */
+  moods?: string[];
   /** Additional context */
   context?: {
     isPregnant?: boolean;
@@ -208,8 +208,8 @@ export function buildInterpretationContext(request: InterpretationRequest): Inte
   if (request.context?.isPregnant) {
     dreamerParts.push('孕妇');
   }
-  if (request.mood) {
-    dreamerParts.push(`心情：${request.mood}`);
+  if (request.moods && request.moods.length > 0) {
+    dreamerParts.push(`心情：${request.moods.join('、')}`);
   }
   const dreamerContext = dreamerParts.length > 0 ? dreamerParts.join('，') : '未提供';
 
