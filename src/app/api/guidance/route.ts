@@ -22,7 +22,7 @@ import { streamGuidance, type GuidanceRequest } from '@/lib/ai/interpret';
 import { logLlmCost, calculateCostFromModelName, PROVIDER_CONFIG } from '@/lib/ai';
 import type { AIProviderType } from '@/lib/ai/types';
 import type { DeductCreditResult } from '@/lib/supabase/types';
-import { captureServerEvent } from '@/lib/posthog';
+import { captureServerEvent, flushPostHog } from '@/lib/posthog';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -232,6 +232,9 @@ export async function POST(request: NextRequest) {
             success: true,
             streaming: true,
           });
+
+          // Flush PostHog events before serverless function terminates
+          await flushPostHog();
         }
       },
     });
