@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth";
 import { CheckInBonusToast } from "@/components/auth/CheckInBonusToast";
+import { PostHogProvider } from "./posthog-provider";
 
 export const metadata: Metadata = {
   title: "AI Dream Interpretation - Unlock the Secrets of Your Dreams",
@@ -28,10 +29,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased">
-        <AuthProvider>
-          {children}
-          <CheckInBonusToast />
-        </AuthProvider>
+        <PostHogProvider>
+          <AuthProvider>
+            {children}
+            <CheckInBonusToast />
+          </AuthProvider>
+        </PostHogProvider>
       </body>
     </html>
   );

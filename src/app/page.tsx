@@ -8,6 +8,7 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { DreamForm, AIInterpretation, DreamJournal } from '@/components/dream';
 import type { DreamFormData } from '@/components/dream';
 import type { DreamSymbol, DreamInterpretation, DreamMood } from '@/lib/types/dream';
+import { useTrackEvent } from './posthog-provider';
 
 export default function Home() {
   const [dreamContent, setDreamContent] = useState('');
@@ -23,9 +24,21 @@ export default function Home() {
   const [interpretation, setInterpretation] = useState<DreamInterpretation | null>(null);
   const [symbols, setSymbols] = useState<DreamSymbol[]>([]);
 
+  // PostHog event tracking
+  const { trackDreamSubmit, trackInterpretationComplete } = useTrackEvent();
+
   // Handle form submission
   const handleInterpret = useCallback(async (data: DreamFormData) => {
     if (!data.dreamContent.trim()) return;
+
+    // Track dream submission
+    trackDreamSubmit({
+      dreamLength: data.dreamContent.length,
+      hasMoods: (data.moods?.length || 0) > 0,
+      moodCount: data.moods?.length || 0,
+      hasGender: !!data.gender,
+      hasDreamTime: !!data.dreamTime,
+    });
 
     setDreamContent(data.dreamContent);
     setDreamMoods(data.moods || []);
@@ -36,16 +49,22 @@ export default function Home() {
     });
     setIsInterpreting(true);
     setShowResult(true);
-  }, []);
+  }, [trackDreamSubmit]);
 
   // Handle interpretation complete
   const handleInterpretComplete = useCallback(
     (interp: DreamInterpretation, syms: DreamSymbol[]) => {
+      // Track interpretation completion
+      trackInterpretationComplete({
+        symbolCount: syms.length,
+        interpretationLength: interp?.detailed?.length || 0,
+      });
+
       setInterpretation(interp);
       setSymbols(syms);
       setIsInterpreting(false);
     },
-    []
+    [trackInterpretationComplete]
   );
 
   // Reset to start new interpretation

@@ -10,6 +10,7 @@ import { useTypewriter } from '@/hooks/useTypewriter';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { SymbolCard } from './SymbolCard';
 import { FortuneIndicator } from './FortuneIndicator';
+import { useTrackEvent } from '@/app/posthog-provider';
 import type { DreamSymbol, DreamInterpretation, DreamMood } from '@/lib/types/dream';
 import type { FortuneType } from '@/lib/knowledge/fortune';
 
@@ -227,6 +228,7 @@ export function AIInterpretation({
   showContainer = true,
 }: AIInterpretationProps) {
   const { refreshCredits } = useAuth();
+  const { trackGuidanceRequested, trackGuidanceComplete } = useTrackEvent();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('interpretation');
@@ -371,6 +373,12 @@ export function AIInterpretation({
   const fetchGuidance = useCallback(async () => {
     if (guidanceLoading || !interpretationText || !dreamContent.trim()) return;
 
+    // Track guidance request
+    trackGuidanceRequested({
+      dreamLength: dreamContent.length,
+      interpretationLength: interpretationText.length,
+    });
+
     setGuidanceLoading(true);
     setGuidanceError(null);
     setGuidanceContent('');
@@ -449,8 +457,14 @@ export function AIInterpretation({
       setGuidanceError(e instanceof Error ? e.message : '获取指引失败，请重试');
     } finally {
       setGuidanceLoading(false);
+      // Track guidance completion if successful (no error set)
+      if (!guidanceError) {
+        trackGuidanceComplete({
+          dreamLength: dreamContent.length,
+        });
+      }
     }
-  }, [dreamContent, interpretationText, guidanceLoading, refreshCredits]);
+  }, [dreamContent, interpretationText, guidanceLoading, refreshCredits, trackGuidanceRequested, trackGuidanceComplete, guidanceError]);
 
   // Auto-start if enabled
   useEffect(() => {

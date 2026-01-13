@@ -29,6 +29,7 @@ import { NextRequest } from 'next/server';
 import { streamDreamInterpretation, type InterpretationRequest } from '@/lib/ai/interpret';
 import { logLlmCost, calculateCostFromModelName, PROVIDER_CONFIG } from '@/lib/ai';
 import type { AIProviderType } from '@/lib/ai/types';
+import { captureServerEvent } from '@/lib/posthog';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -169,6 +170,18 @@ export async function POST(request: NextRequest) {
               outputCharCount,
               tokensEstimated: !hasRealUsage,
             },
+          });
+
+          // Track LLM generation event with PostHog
+          captureServerEvent('anonymous', '$ai_generation', {
+            $ai_provider: providerType,
+            $ai_model: modelName,
+            $ai_input_tokens: inputTokens,
+            $ai_output_tokens: outputTokens,
+            $ai_latency: latencyMs,
+            endpoint: 'jiemeng/interpret',
+            success: true,
+            streaming: true,
           });
         }
       },
