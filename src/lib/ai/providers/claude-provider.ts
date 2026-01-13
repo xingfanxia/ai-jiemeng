@@ -1,23 +1,29 @@
 /**
  * Claude AI Provider (Anthropic)
+ * Wrapped with PostHog for LLM analytics
  */
 
+import { Anthropic as PostHogAnthropic } from '@posthog/ai';
 import Anthropic from '@anthropic-ai/sdk';
 import { BaseProvider } from './base-provider';
 import type { AIMessage, AIResponse, AIRequestOptions, AIToolCall, AIStreamChunk } from '../types';
 import { PROVIDER_CONFIG } from '../config';
+import { getPostHogClient } from '@/lib/posthog';
 
 export class ClaudeProvider extends BaseProvider {
   type = 'claude' as const;
-  private client: Anthropic | null = null;
+  private client: PostHogAnthropic | null = null;
 
-  private getClient(): Anthropic {
+  private getClient(): PostHogAnthropic {
     if (!this.client) {
       const apiKey = process.env.ANTHROPIC_API_KEY;
       if (!apiKey) {
         throw new Error('ANTHROPIC_API_KEY not set');
       }
-      this.client = new Anthropic({ apiKey });
+      this.client = new PostHogAnthropic({
+        apiKey,
+        posthog: getPostHogClient(),
+      });
     }
     return this.client;
   }

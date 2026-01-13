@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import posthog from 'posthog-js';
 import type { User, Session } from '@supabase/supabase-js';
 import type { CreditsState } from '@/lib/supabase/types';
 
@@ -123,6 +124,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
+      
+      // Identify user in PostHog if logged in
+      if (session?.user?.email) {
+        posthog.identify(session.user.id, {
+          email: session.user.email,
+        });
+      }
     };
 
     getSession();
@@ -133,6 +141,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
+        
+        // Identify user in PostHog on login
+        if (event === 'SIGNED_IN' && session?.user?.email) {
+          posthog.identify(session.user.id, {
+            email: session.user.email,
+          });
+        }
+        // Reset PostHog on logout
+        if (event === 'SIGNED_OUT') {
+          posthog.reset();
+        }
       }
     );
 

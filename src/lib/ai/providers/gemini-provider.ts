@@ -1,24 +1,30 @@
 /**
  * Gemini AI Provider (Google)
  * Uses @google/genai SDK with thinking config support
+ * Wrapped with PostHog for LLM analytics
  */
 
-import { GoogleGenAI, type Content } from '@google/genai';
+import { GoogleGenAI as PostHogGoogleGenAI } from '@posthog/ai';
+import { type Content } from '@google/genai';
 import { BaseProvider } from './base-provider';
 import type { AIMessage, AIResponse, AIRequestOptions, AIToolCall, AIStreamChunk } from '../types';
 import { PROVIDER_CONFIG } from '../config';
+import { getPostHogClient } from '@/lib/posthog';
 
 export class GeminiProvider extends BaseProvider {
   type = 'gemini' as const;
-  private client: GoogleGenAI | null = null;
+  private client: PostHogGoogleGenAI | null = null;
 
-  private getClient(): GoogleGenAI {
+  private getClient(): PostHogGoogleGenAI {
     if (!this.client) {
       const apiKey = process.env.GOOGLE_AI_API_KEY;
       if (!apiKey) {
         throw new Error('GOOGLE_AI_API_KEY not set');
       }
-      this.client = new GoogleGenAI({ apiKey });
+      this.client = new PostHogGoogleGenAI({
+        apiKey,
+        posthog: getPostHogClient(),
+      });
     }
     return this.client;
   }
@@ -217,7 +223,7 @@ export class GeminiProvider extends BaseProvider {
     };
   }
 
-  private convertResponse(result: Awaited<ReturnType<GoogleGenAI['models']['generateContent']>>): AIResponse {
+  private convertResponse(result: Awaited<ReturnType<PostHogGoogleGenAI['models']['generateContent']>>): AIResponse {
     const candidate = result.candidates?.[0];
 
     if (!candidate) {

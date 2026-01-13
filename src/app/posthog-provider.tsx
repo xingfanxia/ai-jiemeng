@@ -12,6 +12,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         person_profiles: 'identified_only',
         capture_pageview: true,
         capture_pageleave: true,
+        capture_exceptions: true, // Enable automatic exception capture
         // Disable in development
         loaded: (posthog) => {
           if (process.env.NODE_ENV === 'development') {

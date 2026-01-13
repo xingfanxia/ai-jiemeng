@@ -47,6 +47,31 @@ export function captureServerEvent(
   }
 }
 
+// Helper to capture server-side exceptions
+export function captureException(
+  error: Error,
+  distinctId?: string,
+  properties?: Record<string, unknown>
+) {
+  try {
+    const client = getPostHogClient()
+    client.capture({
+      distinctId: distinctId || 'anonymous',
+      event: '$exception',
+      properties: {
+        $exception_message: error.message,
+        $exception_type: error.name,
+        $exception_stack_trace_raw: error.stack,
+        ...properties,
+        $lib: 'posthog-node',
+        timestamp: new Date().toISOString(),
+      },
+    })
+  } catch (captureError) {
+    console.error('[PostHog] Failed to capture exception:', captureError)
+  }
+}
+
 // Shutdown hook for graceful shutdown
 export async function shutdownPostHog() {
   if (posthogClient) {
