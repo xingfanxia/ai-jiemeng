@@ -38,11 +38,11 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
 
     // Translate common Supabase errors to Chinese
     const translateError = (msg: string) => {
-      if (msg.includes('Email not confirmed')) return 'Email not verified, please check your inbox';
-      if (msg.includes('Invalid login credentials')) return 'Invalid email or password';
-      if (msg.includes('already registered')) return 'This email is already registered, please login';
-      if (msg.includes('Password should be')) return 'Password must be at least 6 characters';
-      if (msg.includes('rate limit')) return 'Too many attempts, please try again later';
+      if (msg.includes('Email not confirmed')) return '邮箱未验证，请查看收件箱';
+      if (msg.includes('Invalid login credentials')) return '邮箱或密码错误';
+      if (msg.includes('already registered')) return '该邮箱已注册，请直接登录';
+      if (msg.includes('Password should be')) return '密码至少需要6个字符';
+      if (msg.includes('rate limit')) return '操作过于频繁，请稍后再试';
       return msg;
     };
 
@@ -59,11 +59,11 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
         if (error) {
           setError(translateError(error.message));
         } else {
-          setSuccess('Registration successful! Please check your email for verification.');
+          setSuccess('注册成功！请查看邮箱完成验证。');
         }
       }
     } catch {
-      setError('Operation failed, please try again');
+      setError('操作失败，请重试');
     } finally {
       setIsSubmitting(false);
     }
@@ -113,12 +113,12 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
               <X className="w-5 h-5 text-muted-foreground" />
             </button>
             <h2 className="text-xl font-semibold text-foreground">
-              {mode === 'login' ? 'Login' : 'Sign Up'}
+              {mode === 'login' ? '登录' : '注册'}
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
               {mode === 'login'
-                ? 'Login to save and manage your dream interpretations'
-                : 'Create an account to save your dream interpretations'}
+                ? '登录后可保存和管理您的解梦记录'
+                : '注册账号以保存您的解梦记录'}
             </p>
           </div>
 
@@ -126,10 +126,10 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
           {mode === 'signup' && (
             <div className="mx-6 mt-4 p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
               <p className="text-sm text-indigo-700 dark:text-indigo-400">
-                New users get <strong>10 free</strong> dream interpretation credits
+                新用户可获得 <strong>10次免费</strong> 解梦额度
               </p>
               <p className="text-xs text-indigo-600/80 dark:text-indigo-500/80 mt-1">
-                Plus 2 free credits daily
+                每日还可获得2次免费额度
               </p>
             </div>
           )}
@@ -161,7 +161,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              {mode === 'login' ? 'Continue with Google' : 'Sign up with Google'}
+              {mode === 'login' ? '使用 Google 登录' : '使用 Google 注册'}
             </Button>
 
             <div className="relative">
@@ -169,7 +169,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
                 <div className="w-full border-t border-border" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">or</span>
+                <span className="bg-card px-2 text-muted-foreground">或</span>
               </div>
             </div>
 
@@ -180,7 +180,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     type="email"
-                    placeholder="Email address"
+                    placeholder="邮箱地址"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10"
@@ -194,7 +194,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     type="password"
-                    placeholder="Password"
+                    placeholder="密码"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10"
@@ -224,7 +224,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
                 ) : (
                   <User className="w-4 h-4 mr-2" />
                 )}
-                {mode === 'login' ? 'Login' : 'Sign Up'}
+                {mode === 'login' ? '登录' : '注册'}
               </Button>
             </form>
           </div>
@@ -240,7 +240,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
               }}
               className="text-sm text-primary hover:underline"
             >
-              {mode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Login'}
+              {mode === 'login' ? '没有账号？立即注册' : '已有账号？立即登录'}
             </button>
           </div>
         </motion.div>

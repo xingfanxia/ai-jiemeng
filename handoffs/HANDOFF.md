@@ -1,6 +1,6 @@
 # Handoff: AI周公解梦App
 
-## Last Updated: 2026-01-12
+## Last Updated: 2026-01-14
 
 ## Core References
 | Document | Path | Purpose |
@@ -79,7 +79,13 @@
 - Conditions system (五行, 时辰, 反梦, 五不占)
 - AI prompts for Zhou Gong style interpretation (no emojis)
 
-## Bug Fixes This Session (2026-01-12)
+## Bug Fixes (2026-01-14)
+
+| Bug | Root Cause | Fix |
+|-----|------------|-----|
+| Credits don't change (neither increase nor decrease) | `/api/credits` queried wrong column names (`credits`, `last_check_in`) instead of using `get_credits` RPC | Replaced direct table query with `get_credits` RPC call (matching bazi-app) |
+
+## Bug Fixes (2026-01-12)
 
 | Bug | Root Cause | Fix |
 |-----|------------|-----|
@@ -129,6 +135,7 @@ All configured:
 | 2026-01-12 | Mood | Multi-select moods, clearer char count |
 | 2026-01-12 | dreamDate | Fix season calculation from dream date |
 | 2026-01-12 | Export | Fix Safari/WeChat - replace emojis with Lucide icons |
+| 2026-01-14 | Credits | Fix credits not updating - use get_credits RPC |
 
 ## Resume Command
 ```
