@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Moon, Sparkles, BookOpen, Star, CloudMoon, Stars } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { UserMenu } from '@/components/auth';
@@ -9,6 +9,7 @@ import { DreamForm, AIInterpretation, DreamJournal } from '@/components/dream';
 import type { DreamFormData } from '@/components/dream';
 import type { DreamSymbol, DreamInterpretation, DreamMood } from '@/lib/types/dream';
 import { useTrackEvent } from './posthog-provider';
+import { useAuth, getPendingDreamState, clearPendingDreamState } from '@/components/auth/AuthProvider';
 
 export default function Home() {
   const [dreamContent, setDreamContent] = useState('');
@@ -23,9 +24,41 @@ export default function Home() {
   const [showJournal, setShowJournal] = useState(false);
   const [interpretation, setInterpretation] = useState<DreamInterpretation | null>(null);
   const [symbols, setSymbols] = useState<DreamSymbol[]>([]);
+  // Track if we restored from pending state (to auto-start interpretation)
+  const [restoredFromPending, setRestoredFromPending] = useState(false);
+
+  // Auth hook to check user state
+  const { user, isLoading: isAuthLoading } = useAuth();
 
   // PostHog event tracking
   const { trackDreamSubmit, trackInterpretationComplete } = useTrackEvent();
+
+  // Restore pending dream state after OAuth redirect
+  useEffect(() => {
+    // Wait for auth to finish loading
+    if (isAuthLoading) return;
+    
+    // Only restore if user is now logged in (just completed OAuth)
+    if (!user) return;
+    
+    const pendingState = getPendingDreamState();
+    if (pendingState && pendingState.dreamContent) {
+      // Restore dream state
+      setDreamContent(pendingState.dreamContent);
+      if (pendingState.moods) {
+        setDreamMoods(pendingState.moods as DreamMood[]);
+      }
+      if (pendingState.context) {
+        setDreamContext(pendingState.context);
+      }
+      if (pendingState.showResult) {
+        setShowResult(true);
+        setRestoredFromPending(true);
+      }
+      // Clear the pending state after restoration
+      clearPendingDreamState();
+    }
+  }, [user, isAuthLoading]);
 
   // Handle form submission
   const handleInterpret = useCallback(async (data: DreamFormData) => {

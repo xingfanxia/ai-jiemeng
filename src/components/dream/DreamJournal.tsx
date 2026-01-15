@@ -206,7 +206,7 @@ export function DreamJournal({
                   e.stopPropagation();
                   setDeleteConfirmId(dream.id);
                 }}
-                className="p-1.5 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                className="p-2 rounded-full text-destructive/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
               </button>

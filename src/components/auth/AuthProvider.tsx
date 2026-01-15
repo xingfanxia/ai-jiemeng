@@ -6,6 +6,66 @@ import posthog from 'posthog-js';
 import type { User, Session } from '@supabase/supabase-js';
 import type { CreditsState } from '@/lib/supabase/types';
 
+// LocalStorage key for preserving dream state across OAuth redirect
+const DREAM_STATE_KEY = 'jiemeng_pending_dream';
+
+export interface PendingDreamState {
+  dreamContent: string;
+  moods?: string[];
+  context?: {
+    gender?: 'male' | 'female' | 'other';
+    isPregnant?: boolean;
+    dreamTime?: string;
+  };
+  showResult?: boolean;
+  timestamp: number;
+}
+
+// Save dream state before OAuth redirect
+export function savePendingDreamState(state: Omit<PendingDreamState, 'timestamp'>) {
+  if (typeof window === 'undefined') return;
+  try {
+    const stateWithTimestamp: PendingDreamState = {
+      ...state,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(DREAM_STATE_KEY, JSON.stringify(stateWithTimestamp));
+  } catch (e) {
+    console.error('Failed to save pending dream state:', e);
+  }
+}
+
+// Get pending dream state (returns null if expired or not found)
+export function getPendingDreamState(): PendingDreamState | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const stored = localStorage.getItem(DREAM_STATE_KEY);
+    if (!stored) return null;
+    
+    const state = JSON.parse(stored) as PendingDreamState;
+    // Expire after 10 minutes to prevent stale state
+    const TEN_MINUTES = 10 * 60 * 1000;
+    if (Date.now() - state.timestamp > TEN_MINUTES) {
+      clearPendingDreamState();
+      return null;
+    }
+    return state;
+  } catch (e) {
+    console.error('Failed to get pending dream state:', e);
+    return null;
+  }
+}
+
+// Clear pending dream state
+export function clearPendingDreamState() {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(DREAM_STATE_KEY);
+  } catch (e) {
+    console.error('Failed to clear pending dream state:', e);
+  }
+}
+
 export interface SaveLimitState {
   used: number;
   max: number;

@@ -1,5 +1,5 @@
-export { AuthProvider, useAuth } from './AuthProvider';
-export type { SaveLimitState } from './AuthProvider';
+export { AuthProvider, useAuth, savePendingDreamState, getPendingDreamState, clearPendingDreamState } from './AuthProvider';
+export type { SaveLimitState, PendingDreamState } from './AuthProvider';
 export { AuthModal } from './AuthModal';
 export { UserMenu } from './UserMenu';
 export { CreditsBadge } from './CreditsBadge';

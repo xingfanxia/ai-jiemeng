@@ -12,9 +12,11 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultMode?: 'login' | 'signup';
+  /** Callback to save state before OAuth redirect (e.g., save dream content to localStorage) */
+  onBeforeOAuthRedirect?: () => void;
 }
 
-export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalProps) {
+export function AuthModal({ isOpen, onClose, defaultMode = 'login', onBeforeOAuthRedirect }: AuthModalProps) {
   const [mode, setMode] = useState<'login' | 'signup'>(defaultMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -71,6 +73,8 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
 
   const handleGoogleSignIn = async () => {
     setError(null);
+    // Save state before OAuth redirect
+    onBeforeOAuthRedirect?.();
     const { error } = await signInWithGoogle();
     if (error) {
       setError(error.message);
@@ -79,6 +83,8 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
 
   const handleTwitterSignIn = async () => {
     setError(null);
+    // Save state before OAuth redirect
+    onBeforeOAuthRedirect?.();
     const { error } = await signInWithTwitter();
     if (error) {
       setError(error.message);

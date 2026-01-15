@@ -7,7 +7,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useTypewriter } from '@/hooks/useTypewriter';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { useAuth, savePendingDreamState } from '@/components/auth/AuthProvider';
+import { AuthModal } from '@/components/auth/AuthModal';
 import { SymbolCard } from './SymbolCard';
 import { FortuneIndicator } from './FortuneIndicator';
 import { useTrackEvent } from '@/app/posthog-provider';
@@ -243,6 +244,9 @@ export function AIInterpretation({
   const [guidanceLoading, setGuidanceLoading] = useState(false);
   const [guidanceError, setGuidanceError] = useState<string | null>(null);
   
+  // Auth modal state for login prompt
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  
   // Store interpretation text for passing to guidance API
   const [interpretationText, setInterpretationText] = useState('');
 
@@ -398,6 +402,7 @@ export function AIInterpretation({
         // Handle specific error codes
         if (data.code === 'UNAUTHORIZED') {
           setGuidanceError('请先登录后再解锁指引');
+          setShowAuthModal(true);
           return;
         }
         if (data.code === 'INSUFFICIENT_CREDITS') {
@@ -811,21 +816,55 @@ export function AIInterpretation({
   );
 
   if (!showContainer) {
-    return cardContent;
+    return (
+      <>
+        {cardContent}
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          defaultMode="login"
+          onBeforeOAuthRedirect={() => {
+            // Save dream state to localStorage before OAuth redirect
+            savePendingDreamState({
+              dreamContent,
+              moods: mood,
+              context,
+              showResult: true,
+            });
+          }}
+        />
+      </>
+    );
   }
 
   return (
-    <Card className="border-indigo-200/50 dark:border-indigo-800/50">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-primary" />
-          <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-            AI 解梦结果
-          </span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>{cardContent}</CardContent>
-    </Card>
+    <>
+      <Card className="border-indigo-200/50 dark:border-indigo-800/50">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-primary" />
+            <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              AI 解梦结果
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>{cardContent}</CardContent>
+      </Card>
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        defaultMode="login"
+        onBeforeOAuthRedirect={() => {
+          // Save dream state to localStorage before OAuth redirect
+          savePendingDreamState({
+            dreamContent,
+            moods: mood,
+            context,
+            showResult: true,
+          });
+        }}
+      />
+    </>
   );
 }
 
