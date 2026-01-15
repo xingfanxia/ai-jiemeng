@@ -6,33 +6,41 @@ import type { AIProviderType, AIModelId, ABTestConfig } from './types';
 
 // Model configurations
 export const MODEL_CONFIG: Record<AIModelId, { provider: AIProviderType; modelName: string }> = {
-  'claude-opus-4.5': {
-    provider: 'claude',
-    modelName: 'claude-opus-4-5-20251101',
+  'gemini-3-flash': {
+    provider: 'gemini',
+    modelName: 'gemini-3-flash-preview',
   },
   'gemini-3-pro': {
     provider: 'gemini',
     modelName: 'gemini-3-pro-preview',
   },
-  'gemini-3-flash': {
-    provider: 'gemini',
-    modelName: 'gemini-3-flash-preview',
+  'claude-sonnet-4.5': {
+    provider: 'claude',
+    modelName: 'claude-sonnet-4-5-20250929',
+  },
+  'claude-opus-4.5': {
+    provider: 'claude',
+    modelName: 'claude-opus-4-5-20251101',
   },
 };
 
-// Cost per 1M tokens (USD) - Updated 2026-01-06
+// Cost per 1M tokens (USD) - Updated 2026-01-15
 export const COST_PER_MILLION_TOKENS: Record<AIModelId, { input: number; output: number }> = {
-  'claude-opus-4.5': {
-    input: 5,      // $5/MTok input
-    output: 25,    // $25/MTok output
+  'gemini-3-flash': {
+    input: 0.5,    // $0.50/MTok input
+    output: 3,     // $3/MTok output (including thinking)
   },
   'gemini-3-pro': {
     input: 2,      // $2/MTok input (<=200k context)
     output: 12,    // $12/MTok output (including thinking)
   },
-  'gemini-3-flash': {
-    input: 0.5,    // $0.50/MTok input
-    output: 3,     // $3/MTok output (including thinking)
+  'claude-sonnet-4.5': {
+    input: 3,      // $3/MTok input
+    output: 15,    // $15/MTok output
+  },
+  'claude-opus-4.5': {
+    input: 5,      // $5/MTok input
+    output: 25,    // $25/MTok output
   },
 };
 
@@ -86,8 +94,60 @@ export function selectProvider(config: ABTestConfig, forceProvider?: AIProviderT
 // Get model ID from model name
 export function getModelId(modelName: string): AIModelId {
   if (modelName.includes('opus')) return 'claude-opus-4.5';
+  if (modelName.includes('sonnet')) return 'claude-sonnet-4.5';
   if (modelName.includes('gemini-3-flash')) return 'gemini-3-flash';
   if (modelName.includes('gemini-3-pro') || modelName.includes('gemini-3')) return 'gemini-3-pro';
-  // Default fallback
-  return 'claude-opus-4.5';
+  // Default fallback to most cost-effective option
+  return 'gemini-3-pro';
+}
+
+// ==================== Feature Flag Configuration ====================
+
+// Valid model IDs for validation (ordered by cost: cheapest to most expensive)
+const VALID_MODEL_IDS: AIModelId[] = ['gemini-3-flash', 'gemini-3-pro', 'claude-sonnet-4.5', 'claude-opus-4.5'];
+
+/**
+ * Check if a string is a valid AIModelId
+ */
+export function isValidModelId(value: unknown): value is AIModelId {
+  return typeof value === 'string' && VALID_MODEL_IDS.includes(value as AIModelId);
+}
+
+/**
+ * Feature flag key for AI model experiments
+ * Use this key in PostHog to control model selection
+ */
+export const AI_MODEL_EXPERIMENT_FLAG = 'jiemeng-ai-model-experiment';
+
+/**
+ * Default model to use when feature flag is not set or invalid
+ */
+export const DEFAULT_AI_MODEL: AIModelId = 'gemini-3-pro';
+
+/**
+ * Get AI model from PostHog feature flag
+ * Falls back to default model if flag is not set or invalid
+ *
+ * @param distinctId - User ID for feature flag evaluation (can be 'anonymous')
+ * @param getFeatureFlagFn - Function to get feature flag value (injected for testability)
+ * @returns The selected AIModelId
+ */
+export async function getAIModelFromFlag(
+  distinctId: string,
+  getFeatureFlagFn: (key: string, userId: string) => Promise<string | boolean | undefined>
+): Promise<AIModelId> {
+  try {
+    const variant = await getFeatureFlagFn(AI_MODEL_EXPERIMENT_FLAG, distinctId);
+
+    if (variant && isValidModelId(variant)) {
+      console.log(`[AI Config] Using model from feature flag: ${variant} for user ${distinctId}`);
+      return variant;
+    }
+
+    console.log(`[AI Config] Feature flag not set or invalid, using default: ${DEFAULT_AI_MODEL}`);
+    return DEFAULT_AI_MODEL;
+  } catch (error) {
+    console.error('[AI Config] Error getting model from feature flag:', error);
+    return DEFAULT_AI_MODEL;
+  }
 }

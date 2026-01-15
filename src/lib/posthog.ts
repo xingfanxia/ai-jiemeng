@@ -89,3 +89,61 @@ export async function shutdownPostHog() {
     posthogClient = null
   }
 }
+
+// ==================== Feature Flag Functions ====================
+
+/**
+ * Get a feature flag value for a user
+ * @param flagKey - The feature flag key
+ * @param distinctId - User ID
+ * @param defaultValue - Default value if flag not found
+ * @returns The flag value (boolean for simple flags, string for multivariate)
+ */
+export async function getFeatureFlag(
+  flagKey: string,
+  distinctId: string,
+  defaultValue?: string | boolean
+): Promise<string | boolean | undefined> {
+  try {
+    const client = getPostHogClient()
+    const value = await client.getFeatureFlag(flagKey, distinctId)
+    return value ?? defaultValue
+  } catch (error) {
+    console.error('[PostHog] Error fetching feature flag:', error)
+    return defaultValue
+  }
+}
+
+/**
+ * Get a feature flag payload (additional data attached to the flag)
+ * @param flagKey - The feature flag key
+ * @param distinctId - User ID
+ * @returns The flag payload or undefined
+ */
+export async function getFeatureFlagPayload(
+  flagKey: string,
+  distinctId: string
+): Promise<Record<string, unknown> | undefined> {
+  try {
+    const client = getPostHogClient()
+    const payload = await client.getFeatureFlagPayload(flagKey, distinctId)
+    return payload as Record<string, unknown> | undefined
+  } catch (error) {
+    console.error('[PostHog] Error fetching feature flag payload:', error)
+    return undefined
+  }
+}
+
+/**
+ * Check if a feature flag is enabled (for boolean flags)
+ * @param flagKey - The feature flag key
+ * @param distinctId - User ID
+ * @returns true if enabled, false otherwise
+ */
+export async function isFeatureEnabled(
+  flagKey: string,
+  distinctId: string
+): Promise<boolean> {
+  const value = await getFeatureFlag(flagKey, distinctId)
+  return value === true || (typeof value === 'string' && value !== 'false')
+}

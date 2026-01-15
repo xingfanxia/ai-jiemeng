@@ -179,6 +179,7 @@ export async function POST(request: NextRequest) {
             $ai_input_tokens: inputTokens,
             $ai_output_tokens: outputTokens,
             $ai_latency: latencyMs,
+            llm_cost: estimatedCost,  // Cost in USD for easy PostHog analysis
             endpoint: 'jiemeng/interpret',
             success: true,
             streaming: true,

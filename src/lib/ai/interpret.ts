@@ -8,9 +8,10 @@
  * - Calls AI with streaming response
  */
 
-import type { AIMessage, AIRequestOptions, AIStreamChunk, AIProviderType } from './types';
+import type { AIMessage, AIRequestOptions, AIStreamChunk, AIProviderType, AIModelId } from './types';
 import { getProvider } from './providers';
-import { getABTestConfig, selectProvider } from './config';
+import { getABTestConfig, selectProvider, MODEL_CONFIG, getAIModelFromFlag, DEFAULT_AI_MODEL } from './config';
+import { getFeatureFlag } from '../posthog';
 import {
   MULTI_PERSPECTIVE_SYSTEM_PROMPT,
   GUIDANCE_SYSTEM_PROMPT,
@@ -311,34 +312,55 @@ export function buildUserPrompt(context: InterpretationContext): string {
   return parts.join('\n');
 }
 
-// ==================== A/B Testing Provider Selection ====================
+// ==================== Feature Flag Model Selection ====================
 
 /**
- * Select AI provider with A/B testing (70% Gemini, 30% Claude)
+ * Model display names
  */
-export function selectInterpretationProvider(): { provider: AIProviderType; providerName: string } {
-  // Get A/B test config
-  const config = getABTestConfig();
+const MODEL_DISPLAY_NAMES: Record<AIModelId, string> = {
+  'gemini-3-flash': 'Gemini 3 Flash',
+  'gemini-3-pro': 'Gemini 3 Pro',
+  'claude-sonnet-4.5': 'Claude Sonnet 4.5',
+  'claude-opus-4.5': 'Claude Opus 4.5',
+};
 
-  // Override with 70% Gemini, 30% Claude for dream interpretation
-  const dreamConfig = {
-    ...config,
-    enabled: true,
-    trafficSplit: {
-      claude: 30,
-      gemini: 70,
-    },
-  };
+/**
+ * Select AI model using PostHog feature flag
+ * Falls back to default model (gemini-3-pro) if flag is not set
+ *
+ * @param distinctId - User ID for feature flag evaluation (default: 'anonymous')
+ * @returns Model info including provider type, model name, and display name
+ */
+export async function selectInterpretationModel(
+  distinctId: string = 'anonymous'
+): Promise<{ provider: AIProviderType; modelId: AIModelId; providerName: string }> {
+  // Get model from PostHog feature flag
+  const modelId = await getAIModelFromFlag(distinctId, getFeatureFlag);
 
-  const selectedType = selectProvider(dreamConfig);
-  const providerNames: Record<AIProviderType, string> = {
-    gemini: 'Gemini 3 Pro',
-    claude: 'Claude Opus 4.5',
-  };
+  const config = MODEL_CONFIG[modelId];
+  const providerName = MODEL_DISPLAY_NAMES[modelId];
+
+  console.log(`[Interpret] Selected model via feature flag: ${modelId} (${providerName})`);
 
   return {
-    provider: selectedType,
-    providerName: providerNames[selectedType],
+    provider: config.provider,
+    modelId,
+    providerName,
+  };
+}
+
+/**
+ * Legacy sync function for backward compatibility
+ * Uses default model without feature flag lookup
+ * @deprecated Use selectInterpretationModel() instead for feature flag support
+ */
+export function selectInterpretationProvider(): { provider: AIProviderType; providerName: string } {
+  const config = MODEL_CONFIG[DEFAULT_AI_MODEL];
+  const providerName = MODEL_DISPLAY_NAMES[DEFAULT_AI_MODEL];
+
+  return {
+    provider: config.provider,
+    providerName,
   };
 }
 
@@ -346,10 +368,13 @@ export function selectInterpretationProvider(): { provider: AIProviderType; prov
 
 /**
  * Stream dream interpretation from AI
+ * @param request - The interpretation request
+ * @param distinctId - User ID for feature flag evaluation (default: 'anonymous')
  */
 export async function* streamDreamInterpretation(
-  request: InterpretationRequest
-): AsyncGenerator<{ content: string; done: boolean; provider?: string; usage?: { inputTokens: number; outputTokens: number } }, void, unknown> {
+  request: InterpretationRequest,
+  distinctId: string = 'anonymous'
+): AsyncGenerator<{ content: string; done: boolean; provider?: string; modelId?: string; usage?: { inputTokens: number; outputTokens: number } }, void, unknown> {
   // Build context
   const context = buildInterpretationContext(request);
 
@@ -359,10 +384,10 @@ export async function* streamDreamInterpretation(
     { role: 'user', content: userPrompt },
   ];
 
-  // Select provider with A/B testing
-  const { provider: providerType, providerName } = selectInterpretationProvider();
+  // Select model using PostHog feature flag
+  const { provider: providerType, modelId, providerName } = await selectInterpretationModel(distinctId);
 
-  console.log(`[Dream Interpretation] Using provider: ${providerName}`);
+  console.log(`[Dream Interpretation] Using provider: ${providerName} (model: ${modelId})`);
 
   // Get the provider instance
   const provider = getProvider(providerType);
