@@ -14,7 +14,7 @@ const sisterApps: AppLink[] = [
   { name: '八字排盘', href: 'https://bazi.ax0x.ai' },
   { name: 'AI解梦', href: 'https://jiemeng.ax0x.ai', current: true },
   { name: '占星', href: null, comingSoon: true },
-  { name: '小六壬', href: 'https://xiaoliuren.ax0x.ai' },
+  { name: '小六壬', href: 'https://liuren.ax0x.ai' },
   { name: 'K线玄学', href: 'https://kline.ax0x.ai' },
   { name: 'MBTI测试', href: 'https://mbti.ax0x.ai' },
 ];
