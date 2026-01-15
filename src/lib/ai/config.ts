@@ -14,11 +14,11 @@ export const MODEL_CONFIG: Record<AIModelId, { provider: AIProviderType; modelNa
     provider: 'gemini',
     modelName: 'gemini-3-pro-preview',
   },
-  'claude-sonnet-4.5': {
+  'claude-sonnet-4-5': {
     provider: 'claude',
     modelName: 'claude-sonnet-4-5-20250929',
   },
-  'claude-opus-4.5': {
+  'claude-opus-4-5': {
     provider: 'claude',
     modelName: 'claude-opus-4-5-20251101',
   },
@@ -34,11 +34,11 @@ export const COST_PER_MILLION_TOKENS: Record<AIModelId, { input: number; output:
     input: 2,      // $2/MTok input (<=200k context)
     output: 12,    // $12/MTok output (including thinking)
   },
-  'claude-sonnet-4.5': {
+  'claude-sonnet-4-5': {
     input: 3,      // $3/MTok input
     output: 15,    // $15/MTok output
   },
-  'claude-opus-4.5': {
+  'claude-opus-4-5': {
     input: 5,      // $5/MTok input
     output: 25,    // $25/MTok output
   },
@@ -93,8 +93,8 @@ export function selectProvider(config: ABTestConfig, forceProvider?: AIProviderT
 
 // Get model ID from model name
 export function getModelId(modelName: string): AIModelId {
-  if (modelName.includes('opus')) return 'claude-opus-4.5';
-  if (modelName.includes('sonnet')) return 'claude-sonnet-4.5';
+  if (modelName.includes('opus')) return 'claude-opus-4-5';
+  if (modelName.includes('sonnet')) return 'claude-sonnet-4-5';
   if (modelName.includes('gemini-3-flash')) return 'gemini-3-flash';
   if (modelName.includes('gemini-3-pro') || modelName.includes('gemini-3')) return 'gemini-3-pro';
   // Default fallback to most cost-effective option
@@ -104,7 +104,7 @@ export function getModelId(modelName: string): AIModelId {
 // ==================== Feature Flag Configuration ====================
 
 // Valid model IDs for validation (ordered by cost: cheapest to most expensive)
-const VALID_MODEL_IDS: AIModelId[] = ['gemini-3-flash', 'gemini-3-pro', 'claude-sonnet-4.5', 'claude-opus-4.5'];
+const VALID_MODEL_IDS: AIModelId[] = ['gemini-3-flash', 'gemini-3-pro', 'claude-sonnet-4-5', 'claude-opus-4-5'];
 
 /**
  * Check if a string is a valid AIModelId

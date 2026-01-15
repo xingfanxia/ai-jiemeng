@@ -7,8 +7,8 @@ export type AIProviderType = 'claude' | 'gemini';
 
 // Specific model identifiers for A/B testing
 export type AIModelId =
-  | 'claude-opus-4.5'
-  | 'claude-sonnet-4.5'
+  | 'claude-opus-4-5'
+  | 'claude-sonnet-4-5'
   | 'gemini-3-pro'
   | 'gemini-3-flash';
 

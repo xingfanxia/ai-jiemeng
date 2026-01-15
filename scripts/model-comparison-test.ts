@@ -95,7 +95,7 @@ const MODELS_TO_TEST = [
     outputCostPerMillion: 12,
   },
   {
-    id: 'claude-sonnet-4.5',
+    id: 'claude-sonnet-4-5',
     provider: 'claude',
     modelName: 'claude-sonnet-4-5-20250929',
     displayName: 'Claude Sonnet 4.5',
@@ -103,7 +103,7 @@ const MODELS_TO_TEST = [
     outputCostPerMillion: 15,
   },
   {
-    id: 'claude-opus-4.5',
+    id: 'claude-opus-4-5',
     provider: 'claude',
     modelName: 'claude-opus-4-5-20251101',
     displayName: 'Claude Opus 4.5',

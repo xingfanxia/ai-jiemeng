@@ -24,7 +24,7 @@ The jiemeng app already had a comprehensive PostHog feature flag implementation 
 |---------|------|-----------|
 | `gemini-3-pro` | Gemini 3 Pro (Default) | 100% |
 | `gemini-3-flash` | Gemini 3 Flash | 0% |
-| `claude-opus-4.5` | Claude Opus 4.5 | 0% |
+| `claude-opus-4-5` | Claude Opus 4.5 | 0% |
 
 ## How It Works
 

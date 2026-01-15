@@ -10,13 +10,13 @@ Set up A/B testing infrastructure to compare cost, quality, and latency across 4
 |----------|----------|-------------------|------------|-------------|
 | `gemini-3-flash` | Google | `gemini-3-flash-preview` | $0.50 | $3.00 |
 | `gemini-3-pro` | Google | `gemini-3-pro-preview` | $2.00 | $12.00 |
-| `claude-sonnet-4.5` | Anthropic | `claude-sonnet-4-5-20250929` | $3.00 | $15.00 |
-| `claude-opus-4.5` | Anthropic | `claude-opus-4-5-20251101` | $5.00 | $25.00 |
+| `claude-sonnet-4-5` | Anthropic | `claude-sonnet-4-5-20250929` | $3.00 | $15.00 |
+| `claude-opus-4-5` | Anthropic | `claude-opus-4-5-20251101` | $5.00 | $25.00 |
 
 ## Files Modified
 
 ### 1. `/src/lib/ai/types.ts`
-- Added `claude-sonnet-4.5` to `AIModelId` union type
+- Added `claude-sonnet-4-5` to `AIModelId` union type
 
 ### 2. `/src/lib/ai/config.ts`
 - Updated `MODEL_CONFIG` with all 4 models
@@ -45,8 +45,8 @@ The feature flag `jiemeng-ai-model-experiment` needs to be configured in PostHog
 |-------------|-----------|-------------|
 | `gemini-3-flash` | 25% | Cheapest, fastest |
 | `gemini-3-pro` | 25% | Mid-tier quality |
-| `claude-sonnet-4.5` | 25% | High quality, mid-price |
-| `claude-opus-4.5` | 25% | Highest quality, highest cost |
+| `claude-sonnet-4-5` | 25% | High quality, mid-price |
+| `claude-opus-4-5` | 25% | Highest quality, highest cost |
 
 ### Recommended Distribution for Statistical Significance
 

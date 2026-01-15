@@ -320,8 +320,8 @@ export function buildUserPrompt(context: InterpretationContext): string {
 const MODEL_DISPLAY_NAMES: Record<AIModelId, string> = {
   'gemini-3-flash': 'Gemini 3 Flash',
   'gemini-3-pro': 'Gemini 3 Pro',
-  'claude-sonnet-4.5': 'Claude Sonnet 4.5',
-  'claude-opus-4.5': 'Claude Opus 4.5',
+  'claude-sonnet-4-5': 'Claude Sonnet 4.5',
+  'claude-opus-4-5': 'Claude Opus 4.5',
 };
 
 /**

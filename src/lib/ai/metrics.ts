@@ -141,7 +141,7 @@ export function finalizeMetrics(
   error?: string
 ): RequestMetrics {
   // Use a default model for legacy cost calculation
-  const modelId: AIModelId = base.provider === 'claude' ? 'claude-opus-4.5' : 'gemini-3-pro';
+  const modelId: AIModelId = base.provider === 'claude' ? 'claude-opus-4-5' : 'gemini-3-pro';
   const costs = COST_PER_MILLION_TOKENS[modelId];
   const estimatedCost = (inputTokens / 1_000_000) * costs.input + (outputTokens / 1_000_000) * costs.output;
 
