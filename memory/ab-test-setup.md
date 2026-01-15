@@ -10,8 +10,8 @@ Set up A/B testing infrastructure to compare cost, quality, and latency across 4
 |----------|----------|-------------------|------------|-------------|
 | `gemini-3-flash` | Google | `gemini-3-flash-preview` | $0.50 | $3.00 |
 | `gemini-3-pro` | Google | `gemini-3-pro-preview` | $2.00 | $12.00 |
-| `claude-sonnet-4-5` | Anthropic | `claude-sonnet-4-5-20250929` | $3.00 | $15.00 |
-| `claude-opus-4-5` | Anthropic | `claude-opus-4-5-20251101` | $5.00 | $25.00 |
+| `claude-sonnet-4-5` | Anthropic | `claude-sonnet-4-5` | $3.00 | $15.00 |
+| `claude-opus-4-5` | Anthropic | `claude-opus-4-5` | $5.00 | $25.00 |
 
 ## Files Modified
 

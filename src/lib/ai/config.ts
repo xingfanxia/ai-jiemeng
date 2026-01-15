@@ -16,11 +16,11 @@ export const MODEL_CONFIG: Record<AIModelId, { provider: AIProviderType; modelNa
   },
   'claude-sonnet-4-5': {
     provider: 'claude',
-    modelName: 'claude-sonnet-4-5-20250929',
+    modelName: 'claude-sonnet-4-5',
   },
   'claude-opus-4-5': {
     provider: 'claude',
-    modelName: 'claude-opus-4-5-20251101',
+    modelName: 'claude-opus-4-5',
   },
 };
 
@@ -47,7 +47,7 @@ export const COST_PER_MILLION_TOKENS: Record<AIModelId, { input: number; output:
 // Legacy provider config (for backwards compatibility)
 export const PROVIDER_CONFIG = {
   claude: {
-    model: process.env.CLAUDE_MODEL || 'claude-opus-4-5-20251101',
+    model: process.env.CLAUDE_MODEL || 'claude-opus-4-5',
     apiKeyEnvVar: 'ANTHROPIC_API_KEY',
   },
   gemini: {
