@@ -5,6 +5,7 @@ import { Moon, Sparkles, BookOpen, Star, CloudMoon, Stars } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { UserMenu } from '@/components/auth';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { Footer } from '@/components/ui/Footer';
 import { DreamForm, AIInterpretation, DreamJournal } from '@/components/dream';
 import type { DreamFormData } from '@/components/dream';
 import type { DreamSymbol, DreamInterpretation, DreamMood } from '@/lib/types/dream';
@@ -263,12 +264,7 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border py-6 mt-16">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground space-y-1">
-          <p>AI 周公解梦 - 传统智慧与现代科技的完美融合</p>
-          <p className="text-xs opacity-60">解梦结果仅供参考娱乐，请理性看待</p>
-        </div>
-      </footer>
+      <Footer />
 
       {/* Dream Journal Dialog */}
       <DreamJournal isOpen={showJournal} onClose={() => setShowJournal(false)} />
