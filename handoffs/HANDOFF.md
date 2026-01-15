@@ -1,6 +1,6 @@
 # Handoff: AI周公解梦App
 
-## Last Updated: 2026-01-14
+## Last Updated: 2026-01-15
 
 ## Core References
 | Document | Path | Purpose |
@@ -79,11 +79,19 @@
 - Conditions system (五行, 时辰, 反梦, 五不占)
 - AI prompts for Zhou Gong style interpretation (no emojis)
 
+## Bug Fixes (2026-01-15)
+
+| Bug | Root Cause | Fix |
+|-----|------------|-----|
+| PostHog events not sending in serverless | Events queued but never flushed before function terminates | Added `flushPostHog()` call at end of API routes |
+
 ## Bug Fixes (2026-01-14)
 
 | Bug | Root Cause | Fix |
 |-----|------------|-----|
 | Credits don't change (neither increase nor decrease) | `/api/credits` queried wrong column names (`credits`, `last_check_in`) instead of using `get_credits` RPC | Replaced direct table query with `get_credits` RPC call (matching bazi-app) |
+| Login page in English | UI not translated | Translated AuthModal to Chinese |
+| Dream input lost after OAuth redirect | No state preservation | Added sessionStorage to preserve dream input across OAuth flow |
 
 ## Bug Fixes (2026-01-12)
 
@@ -97,13 +105,16 @@
 | Char count shows "5,000" | toLocaleString comma confusing | Changed to "5000字" format |
 
 ## Key Architecture Decisions
-- **AI Provider**: Gemini 3 Pro default (70%), Claude backup (30%)
+- **AI Provider**: Controlled via PostHog feature flag `jiemeng-ai-model-experiment`
+  - Current: gemini-3-pro (100%)
+  - Available: gemini-3-flash, gemini-3-pro, claude-sonnet-4-5, claude-opus-4-5
 - **Knowledge**: TypeScript files in `lib/knowledge/` (not DB)
 - **Database**: Only `dream_readings` for user data
 - **Auth**: Supabase OAuth (shared with bazi-app)
-- **Credits**: Reuse bazi-app credit system (deduct_credit RPC)
+- **Credits**: Reuse bazi-app credit system (`get_credits` RPC for reading, `deduct_credit` RPC for deduction)
 - **Cost Logging**: Shared `llm_costs` table with bazi-app
 - **Icons over Emojis**: All UI uses Lucide icons for cross-browser compatibility
+- **OAuth State**: Dream input preserved across login redirects via sessionStorage
 
 ## Environment Variables (Vercel)
 All configured:
@@ -136,6 +147,13 @@ All configured:
 | 2026-01-12 | dreamDate | Fix season calculation from dream date |
 | 2026-01-12 | Export | Fix Safari/WeChat - replace emojis with Lucide icons |
 | 2026-01-14 | Credits | Fix credits not updating - use get_credits RPC |
+| 2026-01-14 | UI | Translate login page to Chinese |
+| 2026-01-14 | OAuth | Add state preservation for dream input across login redirect |
+| 2026-01-15 | PostHog | Fix serverless flush, add LLM analytics tracking |
+| 2026-01-15 | A/B Test | Set up 4-model comparison infrastructure via feature flags |
+| 2026-01-15 | Models | Ran model comparison, set gemini-3-pro as 100% default |
+| 2026-01-15 | Config | Simplified Claude model IDs (removed date suffix) |
+| 2026-01-15 | PostHog | Updated API key across all projects |
 
 ## Resume Command
 ```
