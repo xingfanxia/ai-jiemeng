@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
 import type { AIProviderType } from './types';
 
 export type LlmCostEndpoint = 'interpret' | 'interpret-stream' | 'chat' | 'guidance';
@@ -23,7 +23,7 @@ export interface LogCostParams {
  */
 export async function logLlmCost(params: LogCostParams): Promise<void> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const record = {
       provider: params.provider,
