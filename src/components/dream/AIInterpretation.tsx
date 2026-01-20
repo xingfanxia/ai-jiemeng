@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Sparkles, RefreshCw, Share2, Download, Loader2, BookOpen, Compass, Lock } from 'lucide-react';
+import { Sparkles, RefreshCw, Share2, Download, Loader2, BookOpen, Compass, Lock, Save, Check } from 'lucide-react';
 import { domToPng } from 'modern-screenshot';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -228,7 +228,7 @@ export function AIInterpretation({
   onComplete,
   showContainer = true,
 }: AIInterpretationProps) {
-  const { refreshCredits } = useAuth();
+  const { user, refreshCredits } = useAuth();
   const { trackGuidanceRequested, trackGuidanceComplete } = useTrackEvent();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -237,6 +237,10 @@ export function AIInterpretation({
   const [symbols, setSymbols] = useState<DreamSymbol[]>([]);
   const [fortune, setFortune] = useState<FortuneType | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+
+  // Save dream state
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   // Guidance state (two-step unlock flow)
   const [guidanceLocked, setGuidanceLocked] = useState(true);
@@ -499,6 +503,49 @@ export function AIInterpretation({
     link.download = name;
     link.href = dataUrl;
     link.click();
+  };
+
+  // Save dream to journal
+  const handleSaveDream = async () => {
+    if (isSaving || isSaved) return;
+
+    // Check if user is logged in
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetch('/api/dreams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: dreamContent,
+          title: dreamContent.slice(0, 50) + (dreamContent.length > 50 ? '...' : ''),
+          dream_type: 'normal',
+          extracted_symbols: symbols.map(s => s.name),
+          interpretations: {
+            interpretation: interpretationText,
+            guidance: guidanceContent || null,
+          },
+          fortune_type: fortune || null,
+          mood_before: mood?.[0] || null,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || '保存失败');
+      }
+
+      setIsSaved(true);
+    } catch (err) {
+      console.error('Save dream error:', err);
+      // Could show toast error here
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Export handler - captures image and shares/downloads (same pattern as bazi-app)
@@ -783,6 +830,21 @@ export function AIInterpretation({
               <Download className="w-4 h-4 mr-2" />
             )}
             {canShare ? '分享' : '保存图片'}
+          </Button>
+          <Button
+            variant={isSaved ? 'default' : 'outline'}
+            className="touch-feedback"
+            onClick={handleSaveDream}
+            disabled={isSaving || isSaved}
+          >
+            {isSaving ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : isSaved ? (
+              <Check className="w-4 h-4 mr-2" />
+            ) : (
+              <Save className="w-4 h-4 mr-2" />
+            )}
+            {isSaved ? '已保存' : '保存'}
           </Button>
           <Button
             variant="outline"
