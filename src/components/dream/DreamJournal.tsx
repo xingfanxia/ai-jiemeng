@@ -45,6 +45,18 @@ function MoodIcon({ mood, className }: { mood: DreamMood; className?: string }) 
   return Icon ? <Icon className={className || "w-4 h-4"} /> : null;
 }
 
+/** Safe date formatter - handles invalid dates gracefully */
+function formatDate(dateValue: Date | string | null | undefined, formatStr: string): string {
+  if (!dateValue) return '日期未知';
+  try {
+    const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+    if (isNaN(date.getTime())) return '日期未知';
+    return format(date, formatStr, { locale: zhCN });
+  } catch {
+    return '日期未知';
+  }
+}
+
 interface DreamJournalProps {
   /** Whether journal is visible (for drawer mode) */
   isOpen?: boolean;
@@ -155,7 +167,7 @@ export function DreamJournal({
             {/* Date and Mood */}
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
               <Calendar className="w-3 h-3" />
-              <span>{format(new Date(dream.createdAt), 'MM月dd日 HH:mm', { locale: zhCN })}</span>
+              <span>{formatDate(dream.createdAt, 'MM月dd日 HH:mm')}</span>
               {dream.mood && <MoodIcon mood={dream.mood} />}
             </div>
 
@@ -298,9 +310,7 @@ export function DreamJournal({
                   {selectedDream.title}
                 </DialogTitle>
                 <DialogDescription>
-                  {format(new Date(selectedDream.createdAt), 'yyyy年MM月dd日 HH:mm', {
-                    locale: zhCN,
-                  })}
+                  {formatDate(selectedDream.createdAt, 'yyyy年MM月dd日 HH:mm')}
                 </DialogDescription>
               </DialogHeader>
 
@@ -429,7 +439,7 @@ export function DreamJournalList({
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Calendar className="w-3 h-3" />
-            <span>{format(new Date(dream.createdAt), 'MM/dd', { locale: zhCN })}</span>
+            <span>{formatDate(dream.createdAt, 'MM/dd')}</span>
             {dream.mood && <MoodIcon mood={dream.mood} />}
           </div>
         </button>

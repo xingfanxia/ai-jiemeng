@@ -524,13 +524,15 @@ export function AIInterpretation({
           content: dreamContent,
           title: dreamContent.slice(0, 50) + (dreamContent.length > 50 ? '...' : ''),
           dream_type: 'normal',
+          dream_date: new Date().toISOString().split('T')[0],
           extracted_symbols: symbols.map(s => s.name),
           interpretations: {
             interpretation: interpretationText,
             guidance: guidanceContent || null,
           },
           fortune_type: fortune || null,
-          mood_before: mood?.[0] || null,
+          // mood_before expects { emotion: string, intensity: number } format
+          mood_before: mood?.[0] ? { emotion: mood[0], intensity: 5 } : null,
         }),
       });
 
