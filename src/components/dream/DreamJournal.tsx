@@ -107,9 +107,9 @@ export function DreamJournal({
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
     return (
-      dream.title.toLowerCase().includes(query) ||
-      dream.dreamContent.toLowerCase().includes(query) ||
-      dream.tags.some((tag) => tag.toLowerCase().includes(query))
+      (dream.title || '').toLowerCase().includes(query) ||
+      (dream.dreamContent || '').toLowerCase().includes(query) ||
+      (dream.tags || []).some((tag) => tag.toLowerCase().includes(query))
     );
   });
 
@@ -177,9 +177,9 @@ export function DreamJournal({
             </p>
 
             {/* Tags */}
-            {dream.tags.length > 0 && (
+            {(dream.tags || []).length > 0 && (
               <div className="flex flex-wrap gap-1 mt-2">
-                {dream.tags.slice(0, 3).map((tag) => (
+                {(dream.tags || []).slice(0, 3).map((tag) => (
                   <span
                     key={tag}
                     className="text-xs px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground"
@@ -187,8 +187,8 @@ export function DreamJournal({
                     {tag}
                   </span>
                 ))}
-                {dream.tags.length > 3 && (
-                  <span className="text-xs text-muted-foreground">+{dream.tags.length - 3}</span>
+                {(dream.tags || []).length > 3 && (
+                  <span className="text-xs text-muted-foreground">+{(dream.tags || []).length - 3}</span>
                 )}
               </div>
             )}
@@ -334,11 +334,11 @@ export function DreamJournal({
                 )}
 
                 {/* Symbols */}
-                {selectedDream.symbols.length > 0 && (
+                {(selectedDream.symbols || []).length > 0 && (
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-foreground">梦中意象</h4>
                     <div className="flex flex-wrap gap-2">
-                      {selectedDream.symbols.map((symbol) => (
+                      {(selectedDream.symbols || []).map((symbol) => (
                         <span
                           key={symbol}
                           className="px-2 py-1 text-xs rounded-full bg-primary/10 text-primary"
@@ -351,11 +351,11 @@ export function DreamJournal({
                 )}
 
                 {/* Tags */}
-                {selectedDream.tags.length > 0 && (
+                {(selectedDream.tags || []).length > 0 && (
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-foreground">标签</h4>
                     <div className="flex flex-wrap gap-2">
-                      {selectedDream.tags.map((tag) => (
+                      {(selectedDream.tags || []).map((tag) => (
                         <span
                           key={tag}
                           className="px-2 py-1 text-xs rounded-full bg-secondary text-secondary-foreground"

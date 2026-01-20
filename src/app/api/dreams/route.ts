@@ -3,6 +3,41 @@ import { createClient } from '@/lib/supabase/server';
 import type { DreamReadingInsert, DreamType } from '@/lib/supabase/types';
 
 /**
+ * Transform database row to DreamJournalEntry format
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function transformDreamToJournalEntry(dream: any) {
+  // Extract interpretation summary from interpretations JSON
+  const interpretations = dream.interpretations as { interpretation?: string; guidance?: string } | null;
+  const interpretationSummary = interpretations?.interpretation
+    ? interpretations.interpretation.slice(0, 200) + (interpretations.interpretation.length > 200 ? '...' : '')
+    : '';
+
+  // Extract mood from mood_before
+  const moodBefore = dream.mood_before as { emotion?: string } | null;
+  const mood = moodBefore?.emotion || null;
+
+  return {
+    id: dream.id,
+    title: dream.title || '无标题',
+    dreamContent: dream.content || '',
+    interpretationSummary,
+    symbols: dream.extracted_symbols || [],
+    mood,
+    tags: dream.extracted_symbols || [], // Use symbols as tags for now
+    createdAt: dream.created_at,
+    isFavorite: false, // TODO: Add favorites support
+    // Also include raw fields for detail view
+    fortuneType: dream.fortune_type,
+    fortuneScore: dream.fortune_score,
+    dreamType: dream.dream_type,
+    dreamDate: dream.dream_date,
+    fullInterpretation: interpretations?.interpretation || null,
+    guidance: interpretations?.guidance || null,
+  };
+}
+
+/**
  * GET /api/dreams - List user's dreams (paginated)
  * Query params:
  *   - page: number (default 1)
@@ -67,8 +102,11 @@ export async function GET(request: NextRequest) {
 
     const maxSaved = (profile as { max_saved_readings?: number })?.max_saved_readings ?? 5;
 
+    // Transform database rows to component-expected format
+    const transformedDreams = (dreams || []).map(transformDreamToJournalEntry);
+
     return NextResponse.json({
-      dreams: dreams || [],
+      dreams: transformedDreams,
       total,
       page,
       limit,
