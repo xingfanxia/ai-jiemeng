@@ -38,6 +38,7 @@ export interface Database {
           fortune_type: FortuneType | null;
           chat_messages: Json[];
           source: DreamSource;
+          is_favorite: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -59,6 +60,7 @@ export interface Database {
           fortune_type?: FortuneType | null;
           chat_messages?: Json[];
           source?: DreamSource;
+          is_favorite?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -80,6 +82,7 @@ export interface Database {
           fortune_type?: FortuneType | null;
           chat_messages?: Json[];
           source?: DreamSource;
+          is_favorite?: boolean;
           created_at?: string;
           updated_at?: string;
         };

@@ -26,7 +26,7 @@ function transformDreamToJournalEntry(dream: any) {
     mood,
     tags: dream.extracted_symbols || [], // Use symbols as tags for now
     createdAt: dream.created_at,
-    isFavorite: false, // TODO: Add favorites support
+    isFavorite: dream.is_favorite ?? false,
     // Also include raw fields for detail view
     fortuneType: dream.fortune_type,
     fortuneScore: dream.fortune_score,

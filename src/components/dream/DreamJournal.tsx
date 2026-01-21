@@ -120,9 +120,16 @@ export function DreamJournal({
       if (res.ok) {
         setDreams(dreams.filter((d) => d.id !== id));
         setDeleteConfirmId(null);
+      } else {
+        // Log error details for debugging
+        const errorData = await res.json().catch(() => ({}));
+        console.error('Failed to delete dream:', res.status, errorData);
+        // Still close the dialog but show failed state could be added here
+        setDeleteConfirmId(null);
       }
     } catch (e) {
       console.error('Failed to delete dream:', e);
+      setDeleteConfirmId(null);
     }
   };
 
@@ -131,16 +138,24 @@ export function DreamJournal({
     const dream = dreams.find((d) => d.id === id);
     if (!dream) return;
 
+    // Optimistic update
+    const newFavoriteState = !dream.isFavorite;
+    setDreams(dreams.map((d) => (d.id === id ? { ...d, isFavorite: newFavoriteState } : d)));
+
     try {
       const res = await fetch(`/api/dreams/${id}`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isFavorite: !dream.isFavorite }),
+        body: JSON.stringify({ is_favorite: newFavoriteState }),
       });
-      if (res.ok) {
-        setDreams(dreams.map((d) => (d.id === id ? { ...d, isFavorite: !d.isFavorite } : d)));
+      if (!res.ok) {
+        // Revert on failure
+        setDreams(dreams.map((d) => (d.id === id ? { ...d, isFavorite: !newFavoriteState } : d)));
+        console.error('Failed to toggle favorite:', await res.text());
       }
     } catch (e) {
+      // Revert on error
+      setDreams(dreams.map((d) => (d.id === id ? { ...d, isFavorite: !newFavoriteState } : d)));
       console.error('Failed to toggle favorite:', e);
     }
   };
@@ -372,8 +387,17 @@ export function DreamJournal({
                 <Button variant="outline" onClick={() => setSelectedDream(null)}>
                   关闭
                 </Button>
-                <Button variant="dream" onClick={() => onSelect?.(selectedDream)}>
-                  查看完整解读
+                <Button
+                  variant="dream"
+                  onClick={() => {
+                    if (onSelect) {
+                      onSelect(selectedDream);
+                    }
+                    // Always close the dialog after clicking
+                    setSelectedDream(null);
+                  }}
+                >
+                  {onSelect ? '查看完整解读' : '确定'}
                 </Button>
               </div>
             </>

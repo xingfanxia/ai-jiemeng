@@ -2,6 +2,8 @@
  * Dream Interpretation Types
  */
 
+import type { FortuneType } from '@/lib/knowledge/fortune';
+
 /**
  * A single dream symbol extracted from the dream
  */
@@ -139,4 +141,16 @@ export interface DreamJournalEntry {
   tags: string[];
   createdAt: Date;
   isFavorite: boolean;
+  /** Full interpretation text (for loading saved dreams) */
+  fullInterpretation?: string | null;
+  /** Guidance text (for loading saved dreams) */
+  guidance?: string | null;
+  /** Fortune type */
+  fortuneType?: FortuneType | null;
+  /** Fortune score */
+  fortuneScore?: number | null;
+  /** Dream type */
+  dreamType?: string | null;
+  /** Dream date */
+  dreamDate?: string | null;
 }

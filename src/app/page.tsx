@@ -8,7 +8,8 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Footer } from '@/components/ui/Footer';
 import { DreamForm, AIInterpretation, DreamJournal } from '@/components/dream';
 import type { DreamFormData } from '@/components/dream';
-import type { DreamSymbol, DreamInterpretation, DreamMood } from '@/lib/types/dream';
+import type { DreamSymbol, DreamInterpretation, DreamMood, DreamJournalEntry } from '@/lib/types/dream';
+import type { FortuneType } from '@/lib/knowledge/fortune';
 import { useTrackEvent } from './posthog-provider';
 import { useAuth, getPendingDreamState, clearPendingDreamState } from '@/components/auth/AuthProvider';
 
@@ -27,6 +28,13 @@ export default function Home() {
   const [symbols, setSymbols] = useState<DreamSymbol[]>([]);
   // Track if we restored from pending state (to auto-start interpretation)
   const [restoredFromPending, setRestoredFromPending] = useState(false);
+  // Saved dream data (for loading from history)
+  const [savedDreamData, setSavedDreamData] = useState<{
+    interpretation?: string | null;
+    guidance?: string | null;
+    symbols?: string[];
+    fortune?: FortuneType | null;
+  } | null>(null);
 
   // Auth hook to check user state
   const { user, isLoading: isAuthLoading } = useAuth();
@@ -110,6 +118,22 @@ export default function Home() {
     setInterpretation(null);
     setSymbols([]);
     setIsInterpreting(false);
+    setSavedDreamData(null);
+  }, []);
+
+  // Handle loading a saved dream from journal
+  const handleSelectDream = useCallback((dream: DreamJournalEntry) => {
+    setDreamContent(dream.dreamContent);
+    setDreamMoods(dream.mood ? [dream.mood] : []);
+    setDreamContext({});
+    setSavedDreamData({
+      interpretation: dream.fullInterpretation,
+      guidance: dream.guidance,
+      symbols: dream.symbols,
+      fortune: dream.fortuneType as FortuneType | null,
+    });
+    setShowResult(true);
+    setShowJournal(false);
   }, []);
 
   return (
@@ -197,6 +221,10 @@ export default function Home() {
                 context={dreamContext}
                 autoStart={true}
                 onComplete={handleInterpretComplete}
+                savedInterpretation={savedDreamData?.interpretation}
+                savedGuidance={savedDreamData?.guidance}
+                savedSymbols={savedDreamData?.symbols}
+                savedFortune={savedDreamData?.fortune}
               />
             </div>
           )}
@@ -267,7 +295,11 @@ export default function Home() {
       <Footer />
 
       {/* Dream Journal Dialog */}
-      <DreamJournal isOpen={showJournal} onClose={() => setShowJournal(false)} />
+      <DreamJournal
+        isOpen={showJournal}
+        onClose={() => setShowJournal(false)}
+        onSelect={handleSelectDream}
+      />
     </div>
   );
 }

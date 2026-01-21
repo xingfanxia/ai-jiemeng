@@ -105,6 +105,14 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Validate is_favorite (must be boolean if provided)
+    if (body.is_favorite !== undefined && typeof body.is_favorite !== 'boolean') {
+      return NextResponse.json(
+        { error: 'VALIDATION_ERROR', message: 'is_favorite 必须是布尔值' },
+        { status: 400 }
+      );
+    }
+
     if (body.clarity !== undefined && body.clarity !== null && (body.clarity < 1 || body.clarity > 10)) {
       return NextResponse.json(
         { error: 'VALIDATION_ERROR', message: '清晰度必须在1-10之间' },
@@ -158,6 +166,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (body.fortune_score !== undefined) updateData.fortune_score = body.fortune_score;
     if (body.fortune_type !== undefined) updateData.fortune_type = body.fortune_type;
     if (body.chat_messages !== undefined) updateData.chat_messages = body.chat_messages;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (body.is_favorite !== undefined) (updateData as any).is_favorite = body.is_favorite;
 
     // Check if there's anything to update
     if (Object.keys(updateData).length === 0) {
@@ -229,13 +239,13 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     // First check if the dream exists and belongs to user
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: existing } = await (supabase.from('dream_readings') as any)
+    const { data: existing, error: existError } = await (supabase.from('dream_readings') as any)
       .select('id')
       .eq('id', id)
       .eq('user_id', user.id)
       .single();
 
-    if (!existing) {
+    if (existError || !existing) {
       return NextResponse.json(
         { error: 'NOT_FOUND', message: '梦境记录不存在' },
         { status: 404 }

@@ -52,6 +52,14 @@ interface AIInterpretationProps {
   onComplete?: (interpretation: DreamInterpretation, symbols: DreamSymbol[]) => void;
   /** Show in container card */
   showContainer?: boolean;
+  /** Pre-loaded interpretation (for viewing saved dreams) */
+  savedInterpretation?: string | null;
+  /** Pre-loaded guidance (for viewing saved dreams) */
+  savedGuidance?: string | null;
+  /** Pre-loaded symbols (for viewing saved dreams) */
+  savedSymbols?: string[];
+  /** Pre-loaded fortune (for viewing saved dreams) */
+  savedFortune?: FortuneType | null;
 }
 
 /**
@@ -227,6 +235,10 @@ export function AIInterpretation({
   autoStart = false,
   onComplete,
   showContainer = true,
+  savedInterpretation,
+  savedGuidance,
+  savedSymbols,
+  savedFortune,
 }: AIInterpretationProps) {
   const { user, refreshCredits } = useAuth();
   const { trackGuidanceRequested, trackGuidanceComplete } = useTrackEvent();
@@ -479,9 +491,31 @@ export function AIInterpretation({
   useEffect(() => {
     if (autoStart && !hasStarted.current && dreamContent) {
       hasStarted.current = true;
-      fetchInterpretation();
+      // If we have saved data, display it directly instead of fetching
+      if (savedInterpretation) {
+        setInterpretationText(savedInterpretation);
+        appendToBuffer(savedInterpretation);
+        flush();
+        if (savedFortune) setFortune(savedFortune);
+        if (savedSymbols && savedSymbols.length > 0) {
+          // Convert string[] to DreamSymbol[]
+          setSymbols(savedSymbols.map((name, i) => ({
+            name,
+            meaning: '',
+            category: 'abstract' as const,
+            significance: 'medium' as const,
+          })));
+        }
+        if (savedGuidance) {
+          setGuidanceContent(savedGuidance);
+          setGuidanceLocked(false);
+        }
+        setIsSaved(true); // Mark as already saved
+      } else {
+        fetchInterpretation();
+      }
     }
-  }, [autoStart, dreamContent, fetchInterpretation]);
+  }, [autoStart, dreamContent, fetchInterpretation, savedInterpretation, savedGuidance, savedSymbols, savedFortune, appendToBuffer, flush]);
 
   // Auto-scroll as content streams (interpretation)
   useEffect(() => {
