@@ -50,8 +50,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if user was referred (for signup bonus toast)
-    const { data: profile } = await supabase
-      .from('user_profiles')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: profile } = await (supabase.from('user_profiles') as any)
       .select('referred_by')
       .eq('id', user.id)
       .single();
