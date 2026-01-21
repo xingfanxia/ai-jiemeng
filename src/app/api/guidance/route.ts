@@ -133,11 +133,24 @@ export async function POST(request: NextRequest) {
         let streamSuccess = true;
 
         try {
-          // Send remaining credits info first
-          const creditsEvent = `data: ${JSON.stringify({
+          // Send remaining credits info first (including referral bonus if claimed)
+          const creditsEventData: {
+            type: 'credits';
+            remaining: number;
+            referralBonusClaimed?: boolean;
+            referralBonusAmount?: number;
+          } = {
             type: 'credits',
             remaining: remainingCredits,
-          })}\n\n`;
+          };
+
+          // Add referral bonus info if bonus was claimed
+          if (result?.referral_bonus_claimed) {
+            creditsEventData.referralBonusClaimed = true;
+            creditsEventData.referralBonusAmount = result.referral_bonus_amount || 0;
+          }
+
+          const creditsEvent = `data: ${JSON.stringify(creditsEventData)}\n\n`;
           controller.enqueue(encoder.encode(creditsEvent));
 
           for await (const chunk of streamGuidance(guidanceRequest)) {

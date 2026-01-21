@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useTypewriter } from '@/hooks/useTypewriter';
-import { useAuth, savePendingDreamState } from '@/components/auth/AuthProvider';
+import { useAuth, savePendingDreamState, notifyReferralBonus } from '@/components/auth/AuthProvider';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { SymbolCard } from './SymbolCard';
 import { FortuneIndicator } from './FortuneIndicator';
@@ -456,6 +456,17 @@ export function AIInterpretation({
                 const jsonStr = line.slice(6);
                 if (!jsonStr.trim()) continue;
                 const data = JSON.parse(jsonStr);
+
+                // Handle credits event with potential referral bonus
+                if (data.type === 'credits') {
+                  // Check if referral bonus was claimed
+                  if (data.referralBonusClaimed && data.referralBonusAmount > 0) {
+                    // Notify for toast notification after a short delay
+                    setTimeout(() => {
+                      notifyReferralBonus('unlock', data.referralBonusAmount, data.remaining);
+                    }, 500);
+                  }
+                }
 
                 // Handle text chunks
                 if (data.type === 'text' && data.content) {
