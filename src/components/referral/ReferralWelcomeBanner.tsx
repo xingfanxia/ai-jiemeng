@@ -12,20 +12,33 @@ const WELCOME_BANNER_DISMISSED_KEY = 'xuanxue_referral_welcome_dismissed';
 
 interface ReferralWelcomeBannerProps {
   onOpenSignup: () => void;
+  isAutoOpening?: boolean; // When true, skip banner display (modal is auto-opening)
 }
 
 /**
  * Welcome banner shown to users arriving via referral links
  * Only displays when: URL has ?ref= param AND user is NOT logged in
+ * Skips display when modal is auto-opening to prevent flash
  */
-export function ReferralWelcomeBanner({ onOpenSignup }: ReferralWelcomeBannerProps) {
+export function ReferralWelcomeBanner({ onOpenSignup, isAutoOpening = false }: ReferralWelcomeBannerProps) {
   const { user, isLoading: isAuthLoading } = useAuth();
   const searchParams = useSearchParams();
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
+  // When auto-opening modal, dismiss banner immediately to prevent flash
+  useEffect(() => {
+    if (isAutoOpening) {
+      setIsDismissed(true);
+      setIsVisible(false);
+    }
+  }, [isAutoOpening]);
+
   // Check if we should show the banner
   useEffect(() => {
+    // Skip if auto-opening modal (modal is enough, no need for banner)
+    if (isAutoOpening) return;
+
     // Wait for auth to finish loading
     if (isAuthLoading) return;
 
@@ -60,7 +73,7 @@ export function ReferralWelcomeBanner({ onOpenSignup }: ReferralWelcomeBannerPro
 
     // Show the banner
     setIsVisible(true);
-  }, [user, isAuthLoading, searchParams]);
+  }, [user, isAuthLoading, searchParams, isAutoOpening]);
 
   const handleDismiss = () => {
     // Get ref code from URL or localStorage for dismiss tracking

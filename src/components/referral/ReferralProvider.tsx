@@ -33,6 +33,23 @@ function ReferralWelcomeHandler({
   const { user, isLoading: isAuthLoading } = useAuth();
   const searchParams = useSearchParams();
   const [hasAutoOpened, setHasAutoOpened] = useState(false);
+  const [isAutoOpening, setIsAutoOpening] = useState(false);
+
+  // Determine if we should auto-open (check conditions early)
+  useEffect(() => {
+    if (isAuthLoading) return;
+    if (user) return;
+    if (hasAutoOpened) return;
+
+    const refCode = searchParams.get('ref');
+    if (!refCode) return;
+
+    const autoOpenedKey = `xuanxue_referral_auto_opened_${refCode}`;
+    if (sessionStorage.getItem(autoOpenedKey)) return;
+
+    // We will auto-open - set flag immediately to prevent banner flash
+    setIsAutoOpening(true);
+  }, [user, isAuthLoading, searchParams, hasAutoOpened]);
 
   // Auto-open signup modal when arriving via referral link
   useEffect(() => {
@@ -57,16 +74,16 @@ function ReferralWelcomeHandler({
     sessionStorage.setItem(autoOpenedKey, 'true');
     setHasAutoOpened(true);
 
-    // Small delay to ensure everything is mounted
+    // Minimal delay to ensure everything is mounted
     const timer = setTimeout(() => {
       onOpenSignup();
-    }, 500);
+    }, 100);
 
     return () => clearTimeout(timer);
   }, [user, isAuthLoading, searchParams, hasAutoOpened, onOpenSignup]);
 
   return (
-    <ReferralWelcomeBanner onOpenSignup={onOpenSignup} />
+    <ReferralWelcomeBanner onOpenSignup={onOpenSignup} isAutoOpening={isAutoOpening} />
   );
 }
 
