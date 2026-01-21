@@ -94,12 +94,15 @@ export async function POST(request: NextRequest) {
 
     // Check if deduction was successful
     const result = deductResult?.[0];
+    // Calculate combined credits (total + daily)
+    const remainingCredits = (result?.remaining_total || 0) + (result?.remaining_daily || 0);
+
     if (!result?.success) {
       return new Response(
         JSON.stringify({
           error: result?.error_message || '积分不足，请签到获取更多积分',
           code: 'INSUFFICIENT_CREDITS',
-          remaining_credits: result?.remaining_credits ?? 0,
+          remaining_credits: remainingCredits,
         }),
         {
           status: 402,
@@ -133,7 +136,7 @@ export async function POST(request: NextRequest) {
           // Send remaining credits info first
           const creditsEvent = `data: ${JSON.stringify({
             type: 'credits',
-            remaining: result.remaining_credits,
+            remaining: remainingCredits,
           })}\n\n`;
           controller.enqueue(encoder.encode(creditsEvent));
 
