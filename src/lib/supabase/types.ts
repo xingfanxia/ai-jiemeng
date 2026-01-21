@@ -206,7 +206,11 @@ export interface Database {
 export interface DeductCreditResult {
   success: boolean;
   remaining_credits: number;
+  remaining_total?: number;
+  remaining_daily?: number;
   error_message: string | null;
+  referral_bonus_claimed?: boolean;
+  referral_bonus_amount?: number;
 }
 
 export interface GetCreditsResult {

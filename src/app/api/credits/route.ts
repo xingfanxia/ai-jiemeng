@@ -45,13 +45,24 @@ export async function GET(request: NextRequest) {
         credits: 10,
         checkedInToday: false,
         bonusAwarded: false,
+        wasReferred: false,
       });
     }
+
+    // Check if user was referred (for signup bonus toast)
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('referred_by')
+      .eq('id', user.id)
+      .single();
+
+    const wasReferred = !!profile?.referred_by;
 
     return NextResponse.json({
       credits: result.credits,
       checkedInToday: result.checked_in_today,
       bonusAwarded: result.bonus_awarded,
+      wasReferred,
     });
   } catch (error) {
     console.error('Credits API error:', error);

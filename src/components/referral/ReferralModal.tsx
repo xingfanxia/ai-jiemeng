@@ -277,8 +277,8 @@ export function ReferralModal({
 
                 {/* Stats Grid */}
                 {(() => {
-                  const totalReferrals = stats.pendingCount + stats.completedCount;
-                  const signupBonus = totalReferrals * 5;
+                  const totalRegistered = stats.pendingCount + stats.completedCount;
+                  const signupBonus = totalRegistered * 5;
                   const actionBonus = stats.completedCount * 15;
                   const totalEarned = signupBonus + actionBonus;
 
@@ -286,15 +286,15 @@ export function ReferralModal({
                     <div className="grid grid-cols-3 gap-4">
                       <div className="text-center p-3 bg-muted/50 rounded-lg">
                         <Users className="w-5 h-5 mx-auto mb-1 text-primary" />
-                        <div className="text-lg font-bold">{stats.completedCount}</div>
-                        <div className="text-xs text-muted-foreground">已付费</div>
-                        <div className="text-[10px] text-green-500">+15/人</div>
+                        <div className="text-lg font-bold">{totalRegistered}</div>
+                        <div className="text-xs text-muted-foreground">已注册</div>
+                        <div className="text-[10px] text-green-500">+5/人</div>
                       </div>
                       <div className="text-center p-3 bg-muted/50 rounded-lg">
                         <Loader2 className="w-5 h-5 mx-auto mb-1 text-amber-500" />
-                        <div className="text-lg font-bold">{stats.pendingCount}</div>
-                        <div className="text-xs text-muted-foreground">已注册</div>
-                        <div className="text-[10px] text-green-500">+5/人</div>
+                        <div className="text-lg font-bold">{stats.completedCount}</div>
+                        <div className="text-xs text-muted-foreground">已付费</div>
+                        <div className="text-[10px] text-green-500">+15/人</div>
                       </div>
                       <div className="text-center p-3 bg-muted/50 rounded-lg">
                         <Coins className="w-5 h-5 mx-auto mb-1 text-green-500" />
@@ -332,7 +332,7 @@ export function ReferralModal({
                       <h3 className="text-sm font-medium">使用推荐码</h3>
                     </div>
                     <p className="text-xs text-muted-foreground mb-3">
-                      绑定后双方各得+5积分，使用付费功能后再得+15积分（注册后7天内有效）
+                      绑定后双方各得+5积分，使用付费功能后再得+15积分（仅注册7天内有效）
                     </p>
                     <div className="flex gap-2">
                       <Input

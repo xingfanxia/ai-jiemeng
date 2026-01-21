@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth";
 import { CheckInBonusToast } from "@/components/auth/CheckInBonusToast";
+import { ReferralBonusToast } from "@/components/auth/ReferralBonusToast";
 import { PostHogProvider } from "./posthog-provider";
 import { ReferralProvider } from "@/components/referral";
 
@@ -35,6 +36,7 @@ export default function RootLayout({
             <ReferralProvider appName="解梦猫" sourceApp="jiemeng">
               {children}
               <CheckInBonusToast />
+              <ReferralBonusToast />
             </ReferralProvider>
           </AuthProvider>
         </PostHogProvider>
