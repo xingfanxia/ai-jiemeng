@@ -152,7 +152,7 @@ export default function Home() {
               <Moon className="w-7 h-7 text-primary" />
               <Stars className="w-3 h-3 text-amber-400 absolute -top-1 -right-1" />
             </div>
-            <h1 className="text-xl font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-lg sm:text-xl font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent whitespace-nowrap">
               AI 周公解梦
             </h1>
           </div>
