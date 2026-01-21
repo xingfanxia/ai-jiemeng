@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/client';
 import posthog from 'posthog-js';
 import type { User, Session } from '@supabase/supabase-js';
 import type { CreditsState } from '@/lib/supabase/types';
-import { linkPendingReferral } from '@/hooks/useReferralCapture';
 
 // LocalStorage key for preserving dream state across OAuth redirect
 const DREAM_STATE_KEY = 'jiemeng_pending_dream';
@@ -81,9 +80,9 @@ interface AuthContextType {
   saveLimit: SaveLimitState;
   isSaveLimitLoading: boolean;
   signInWithEmail: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUpWithEmail: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signInWithGoogle: () => Promise<{ error: Error | null }>;
-  signInWithTwitter: () => Promise<{ error: Error | null }>;
+  signUpWithEmail: (email: string, password: string, referralCode?: string) => Promise<{ error: Error | null }>;
+  signInWithGoogle: (referralCode?: string) => Promise<{ error: Error | null }>;
+  signInWithTwitter: (referralCode?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshCredits: () => Promise<void>;
   refreshSaveLimit: () => Promise<void>;
@@ -208,8 +207,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           posthog.identify(session.user.id, {
             email: session.user.email,
           });
-          // Link pending referral code if exists
-          linkPendingReferral();
         }
         // Reset PostHog on logout
         if (event === 'SIGNED_OUT') {
@@ -242,33 +239,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error as Error | null };
   };
 
-  const signUpWithEmail = async (email: string, password: string) => {
+  const signUpWithEmail = async (email: string, password: string, referralCode?: string) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         // Redirect to homepage after email confirmation (no callback needed)
         emailRedirectTo: `${window.location.origin}/`,
+        data: {
+          referral_code: referralCode || null,
+          source_app: 'jiemeng',
+        },
       },
     });
     return { error: error as Error | null };
   };
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (referralCode?: string) => {
+    // Build redirect URL with referral code if present
+    const redirectUrl = new URL(`${window.location.origin}/auth/callback`);
+    if (referralCode) {
+      redirectUrl.searchParams.set('ref', referralCode);
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: redirectUrl.toString(),
       },
     });
     return { error: error as Error | null };
   };
 
-  const signInWithTwitter = async () => {
+  const signInWithTwitter = async (referralCode?: string) => {
+    // Build redirect URL with referral code if present
+    const redirectUrl = new URL(`${window.location.origin}/auth/callback`);
+    if (referralCode) {
+      redirectUrl.searchParams.set('ref', referralCode);
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'x',  // OAuth 2.0 uses 'x', not 'twitter'
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: redirectUrl.toString(),
       },
     });
     return { error: error as Error | null };

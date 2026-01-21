@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Copy, Check, Gift, Users, Coins, Share2, Loader2 } from 'lucide-react';
+import { X, Copy, Check, Gift, Users, Coins, Share2, Loader2, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useAuth } from '@/components/auth/AuthProvider';
 
 interface ReferralStats {
@@ -44,6 +45,12 @@ export function ReferralModal({
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Manual referral code entry state
+  const [manualCode, setManualCode] = useState('');
+  const [isLinking, setIsLinking] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const [linkSuccess, setLinkSuccess] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -115,6 +122,44 @@ export function ReferralModal({
     } else {
       // Fallback: copy to clipboard
       handleCopy();
+    }
+  };
+
+  // Handle manual referral code linking
+  const handleLinkReferral = async () => {
+    if (!manualCode.trim()) {
+      setLinkError('请输入推荐码');
+      return;
+    }
+
+    setIsLinking(true);
+    setLinkError(null);
+    setLinkSuccess(false);
+
+    try {
+      const response = await fetch('/api/referral/link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: manualCode.trim(),
+          sourceApp: 'jiemeng',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setLinkSuccess(true);
+        setManualCode('');
+        // Refresh stats to update hasBeenReferred
+        fetchStats();
+      } else {
+        setLinkError(data.message || '绑定推荐码失败');
+      }
+    } catch {
+      setLinkError('网络错误，请稍后重试');
+    } finally {
+      setIsLinking(false);
     }
   };
 
@@ -267,6 +312,52 @@ export function ReferralModal({
                     </li>
                   </ul>
                 </div>
+
+                {/* Manual referral code entry - only show if user has not been referred */}
+                {!stats.hasBeenReferred && (
+                  <div className="pt-4 border-t border-border">
+                    <div className="flex items-center gap-2 mb-3">
+                      <UserPlus className="w-4 h-4 text-primary" />
+                      <h3 className="text-sm font-medium">使用推荐码</h3>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      如果您有朋友的推荐码，可以在此输入绑定
+                    </p>
+                    <div className="flex gap-2">
+                      <Input
+                        type="text"
+                        placeholder="输入推荐码"
+                        value={manualCode}
+                        onChange={(e) => {
+                          setManualCode(e.target.value.toUpperCase());
+                          setLinkError(null);
+                          setLinkSuccess(false);
+                        }}
+                        className="flex-1 font-mono"
+                        disabled={isLinking}
+                      />
+                      <Button
+                        onClick={handleLinkReferral}
+                        disabled={isLinking || !manualCode.trim()}
+                        size="default"
+                      >
+                        {isLinking ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          '绑定'
+                        )}
+                      </Button>
+                    </div>
+                    {linkError && (
+                      <p className="text-xs text-destructive mt-2">{linkError}</p>
+                    )}
+                    {linkSuccess && (
+                      <p className="text-xs text-green-600 dark:text-green-400 mt-2">
+                        推荐码绑定成功！
+                      </p>
+                    )}
+                  </div>
+                )}
               </>
             ) : null}
           </div>

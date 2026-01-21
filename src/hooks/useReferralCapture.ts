@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 const REFERRAL_CODE_KEY = 'xuanxue_pending_referral';
-const REFERRAL_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+const REFERRAL_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days (for manual entry window)
 
 interface PendingReferral {
   code: string;
@@ -14,6 +14,8 @@ interface PendingReferral {
 
 /**
  * Hook to capture referral codes from URL and store in localStorage
+ * The captured code is used to pre-fill signup forms and OAuth flows.
+ * 
  * Usage: Add to your app's root layout or main page component
  *
  * Example: https://jiemeng.panpanmao.com/?ref=PPM-ABC123
@@ -41,6 +43,7 @@ export function useReferralCapture(sourceApp: string = 'jiemeng') {
 
 /**
  * Get pending referral from localStorage (if not expired)
+ * Used by signup forms to pre-fill referral code
  */
 export function getPendingReferral(): PendingReferral | null {
   try {
@@ -49,7 +52,7 @@ export function getPendingReferral(): PendingReferral | null {
 
     const data: PendingReferral = JSON.parse(stored);
 
-    // Check if expired (24 hours)
+    // Check if expired (7 days)
     if (Date.now() - data.capturedAt > REFERRAL_EXPIRY_MS) {
       localStorage.removeItem(REFERRAL_CODE_KEY);
       return null;
@@ -63,38 +66,8 @@ export function getPendingReferral(): PendingReferral | null {
 
 /**
  * Clear pending referral from localStorage
+ * Called after successful referral linking
  */
 export function clearPendingReferral(): void {
   localStorage.removeItem(REFERRAL_CODE_KEY);
-}
-
-/**
- * Link pending referral to current user (call after successful signup)
- * Returns true if referral was successfully linked
- */
-export async function linkPendingReferral(): Promise<boolean> {
-  const pending = getPendingReferral();
-  if (!pending) return false;
-
-  try {
-    const response = await fetch('/api/referral/link', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        code: pending.code,
-        sourceApp: pending.sourceApp,
-      }),
-    });
-
-    const data = await response.json();
-
-    // Clear regardless of success (don't retry failed links)
-    clearPendingReferral();
-
-    return data.success === true;
-  } catch (error) {
-    console.error('Failed to link referral:', error);
-    clearPendingReferral();
-    return false;
-  }
 }

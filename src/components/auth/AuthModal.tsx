@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, Lock, User, Loader2 } from 'lucide-react';
+import { X, Mail, Lock, User, Loader2, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from './AuthProvider';
+import { getPendingReferral } from '@/hooks/useReferralCapture';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login', onBeforeOAut
   const [mode, setMode] = useState<'login' | 'signup'>(defaultMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -30,6 +32,11 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login', onBeforeOAut
   // For SSR safety - only render portal on client
   useEffect(() => {
     setMounted(true);
+    // Pre-fill referral code from URL if captured
+    const pending = getPendingReferral();
+    if (pending?.code) {
+      setReferralCode(pending.code);
+    }
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,7 +64,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login', onBeforeOAut
           onClose();
         }
       } else {
-        const { error } = await signUpWithEmail(email, password);
+        const { error } = await signUpWithEmail(email, password, referralCode.trim() || undefined);
         if (error) {
           setError(translateError(error.message));
         } else {
@@ -75,7 +82,10 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login', onBeforeOAut
     setError(null);
     // Save state before OAuth redirect
     onBeforeOAuthRedirect?.();
-    const { error } = await signInWithGoogle();
+    // Pass referral code from URL or input field
+    const pending = getPendingReferral();
+    const refCode = referralCode.trim() || pending?.code;
+    const { error } = await signInWithGoogle(refCode);
     if (error) {
       setError(error.message);
     }
@@ -85,7 +95,10 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login', onBeforeOAut
     setError(null);
     // Save state before OAuth redirect
     onBeforeOAuthRedirect?.();
-    const { error } = await signInWithTwitter();
+    // Pass referral code from URL or input field
+    const pending = getPendingReferral();
+    const refCode = referralCode.trim() || pending?.code;
+    const { error } = await signInWithTwitter(refCode);
     if (error) {
       setError(error.message);
     }
@@ -209,6 +222,22 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login', onBeforeOAut
                   />
                 </div>
               </div>
+
+              {/* Referral code input - only show on signup */}
+              {mode === 'signup' && (
+                <div className="space-y-2">
+                  <div className="relative">
+                    <Gift className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="推荐码 (选填)"
+                      value={referralCode}
+                      onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+              )}
 
               {error && (
                 <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
