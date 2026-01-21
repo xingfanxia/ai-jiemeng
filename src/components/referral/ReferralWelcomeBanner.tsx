@@ -6,6 +6,7 @@ import { Gift, X, Sparkles } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
+import { getPendingReferral } from '@/hooks/useReferralCapture';
 
 const WELCOME_BANNER_DISMISSED_KEY = 'xuanxue_referral_welcome_dismissed';
 
@@ -34,16 +35,24 @@ export function ReferralWelcomeBanner({ onOpenSignup }: ReferralWelcomeBannerPro
       return;
     }
 
-    // Check if there's a ref param in URL
+    // Check if there's a ref param in URL OR pending referral in localStorage
+    // This handles the race condition where useReferralCapture may have already
+    // removed the ref param from URL and stored it in localStorage
     const refCode = searchParams.get('ref');
-    if (!refCode) {
+    const pendingReferral = getPendingReferral();
+    const hasReferralCode = Boolean((refCode && refCode.trim()) || pendingReferral?.code);
+
+    if (!hasReferralCode) {
       setIsVisible(false);
       return;
     }
 
+    // Use the ref code from URL or localStorage for dismiss tracking
+    const effectiveRefCode = refCode || pendingReferral?.code;
+
     // Check if banner was dismissed this session
     const dismissed = sessionStorage.getItem(WELCOME_BANNER_DISMISSED_KEY);
-    if (dismissed === refCode) {
+    if (dismissed === effectiveRefCode) {
       setIsDismissed(true);
       setIsVisible(false);
       return;
@@ -54,9 +63,13 @@ export function ReferralWelcomeBanner({ onOpenSignup }: ReferralWelcomeBannerPro
   }, [user, isAuthLoading, searchParams]);
 
   const handleDismiss = () => {
+    // Get ref code from URL or localStorage for dismiss tracking
     const refCode = searchParams.get('ref');
-    if (refCode) {
-      sessionStorage.setItem(WELCOME_BANNER_DISMISSED_KEY, refCode);
+    const pendingReferral = getPendingReferral();
+    const effectiveRefCode = refCode || pendingReferral?.code;
+
+    if (effectiveRefCode) {
+      sessionStorage.setItem(WELCOME_BANNER_DISMISSED_KEY, effectiveRefCode);
     }
     setIsDismissed(true);
     setIsVisible(false);
