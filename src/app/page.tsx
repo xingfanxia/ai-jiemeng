@@ -5,6 +5,7 @@ import { Moon, Sparkles, BookOpen, Star, CloudMoon, Stars } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { UserMenu } from '@/components/auth';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { ReferralModal } from '@/components/referral';
 import { Footer } from '@/components/ui/Footer';
 import { DreamForm, AIInterpretation, DreamJournal } from '@/components/dream';
 import type { DreamFormData } from '@/components/dream';
@@ -28,6 +29,8 @@ export default function Home() {
   const [symbols, setSymbols] = useState<DreamSymbol[]>([]);
   // Track if we restored from pending state (to auto-start interpretation)
   const [restoredFromPending, setRestoredFromPending] = useState(false);
+  // Referral modal state
+  const [showReferralModal, setShowReferralModal] = useState(false);
   // Saved dream data (for loading from history)
   const [savedDreamData, setSavedDreamData] = useState<{
     interpretation?: string | null;
@@ -163,7 +166,7 @@ export default function Home() {
               <BookOpen className="w-5 h-5" />
             </button>
             <ThemeToggle />
-            <UserMenu />
+            <UserMenu onReferralClick={() => setShowReferralModal(true)} />
           </div>
         </div>
       </header>
@@ -299,6 +302,12 @@ export default function Home() {
         isOpen={showJournal}
         onClose={() => setShowJournal(false)}
         onSelect={handleSelectDream}
+      />
+
+      {/* Referral Modal */}
+      <ReferralModal
+        isOpen={showReferralModal}
+        onClose={() => setShowReferralModal(false)}
       />
     </div>
   );
