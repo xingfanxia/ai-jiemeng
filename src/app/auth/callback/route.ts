@@ -44,6 +44,7 @@ export async function GET(request: NextRequest) {
   const tokenHash = requestUrl.searchParams.get('token_hash');
   const type = requestUrl.searchParams.get('type');
   const refCode = requestUrl.searchParams.get('ref');
+  const next = requestUrl.searchParams.get('next');
   const origin = requestUrl.origin;
 
   const supabase = await createClient();
@@ -82,8 +83,14 @@ export async function GET(request: NextRequest) {
         await linkReferral(supabase, data.user.id, referralCode);
       }
     }
+
+    // For password recovery, redirect to update-password page
+    if (type === 'recovery') {
+      return NextResponse.redirect(`${origin}/auth/update-password`);
+    }
   }
 
-  // Redirect to home page after successful auth
-  return NextResponse.redirect(origin);
+  // Redirect to next page if specified, otherwise home
+  const redirectTo = next ? `${origin}${next}` : origin;
+  return NextResponse.redirect(redirectTo);
 }

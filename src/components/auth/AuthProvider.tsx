@@ -86,6 +86,8 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   refreshCredits: () => Promise<void>;
   refreshSaveLimit: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error?: string }>;
+  signInWithMagicLink: (email: string) => Promise<{ error?: string }>;
 }
 
 const defaultCredits: CreditsState = { credits: 0, checkedInToday: false };
@@ -322,6 +324,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSaveLimit(defaultSaveLimit);
   };
 
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback?next=/auth/update-password`,
+    });
+    return { error: error?.message };
+  };
+
+  const signInWithMagicLink = async (email: string) => {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        shouldCreateUser: false,
+      },
+    });
+    return { error: error?.message };
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -339,6 +359,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signOut,
         refreshCredits,
         refreshSaveLimit,
+        resetPassword,
+        signInWithMagicLink,
       }}
     >
       {children}
