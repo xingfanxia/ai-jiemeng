@@ -3,6 +3,7 @@ import "./globals.css";
 import { AuthProvider } from "@/components/auth";
 import { CheckInBonusToast } from "@/components/auth/CheckInBonusToast";
 import { PostHogProvider } from "./posthog-provider";
+import { ReferralProvider } from "@/components/referral";
 
 export const metadata: Metadata = {
   title: "AI Dream Interpretation - Unlock the Secrets of Your Dreams",
@@ -31,8 +32,10 @@ export default function RootLayout({
       <body className="antialiased">
         <PostHogProvider>
           <AuthProvider>
-            {children}
-            <CheckInBonusToast />
+            <ReferralProvider appName="解梦猫" sourceApp="jiemeng">
+              {children}
+              <CheckInBonusToast />
+            </ReferralProvider>
           </AuthProvider>
         </PostHogProvider>
       </body>

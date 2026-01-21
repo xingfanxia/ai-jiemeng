@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import posthog from 'posthog-js';
 import type { User, Session } from '@supabase/supabase-js';
 import type { CreditsState } from '@/lib/supabase/types';
+import { linkPendingReferral } from '@/hooks/useReferralCapture';
 
 // LocalStorage key for preserving dream state across OAuth redirect
 const DREAM_STATE_KEY = 'jiemeng_pending_dream';
@@ -207,6 +208,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           posthog.identify(session.user.id, {
             email: session.user.email,
           });
+          // Link pending referral code if exists
+          linkPendingReferral();
         }
         // Reset PostHog on logout
         if (event === 'SIGNED_OUT') {
