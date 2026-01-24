@@ -85,11 +85,28 @@ export function Footer() {
             解梦结果仅供参考娱乐，请理性看待
           </p>
 
+          {/* Legal Links */}
+          <div className="flex items-center gap-4 text-xs text-muted-foreground/70">
+            <Link
+              href="/legal/privacy-policy"
+              className="hover:text-primary transition-colors"
+            >
+              隐私政策
+            </Link>
+            <span className="text-muted-foreground/30">|</span>
+            <Link
+              href="/legal/terms-of-service"
+              className="hover:text-primary transition-colors"
+            >
+              服务条款
+            </Link>
+          </div>
+
           {/* WeChat Support */}
           <div className="flex flex-col items-center gap-1.5 text-xs text-muted-foreground/70 mt-3">
             <div className="flex items-center gap-1.5">
               <MessageCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
-              <span>💬 微信: <span className="font-medium text-foreground">Panpanmao_001</span></span>
+              <span>微信: <span className="font-medium text-foreground">Panpanmao_001</span></span>
             </div>
             <span className="text-muted-foreground/80">种子用户群招募中！反馈建议 & 抢先体验新功能</span>
           </div>

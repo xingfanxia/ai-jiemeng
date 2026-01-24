@@ -8,6 +8,8 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { ReferralModal } from '@/components/referral';
 import { Footer } from '@/components/ui/Footer';
 import { DreamForm, AIInterpretation, DreamJournal } from '@/components/dream';
+import { ConsentModal } from '@/components/ConsentModal';
+import { useConsent } from '@/hooks/useConsent';
 import type { DreamFormData } from '@/components/dream';
 import type { DreamSymbol, DreamInterpretation, DreamMood, DreamJournalEntry } from '@/lib/types/dream';
 import type { FortuneType } from '@/lib/knowledge/fortune';
@@ -41,6 +43,12 @@ export default function Home() {
 
   // Auth hook to check user state
   const { user, isLoading: isAuthLoading } = useAuth();
+
+  // Consent hook for TOS/Privacy Policy
+  const { hasConsented, isLoading: isConsentLoading, acceptConsent } = useConsent({
+    user,
+    isAuthLoading,
+  });
 
   // PostHog event tracking
   const { trackDreamSubmit, trackInterpretationComplete } = useTrackEvent();
@@ -308,6 +316,12 @@ export default function Home() {
       <ReferralModal
         isOpen={showReferralModal}
         onClose={() => setShowReferralModal(false)}
+      />
+
+      {/* Consent Modal */}
+      <ConsentModal
+        isOpen={!isConsentLoading && !hasConsented}
+        onAccept={acceptConsent}
       />
     </div>
   );

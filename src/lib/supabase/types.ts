@@ -95,6 +95,7 @@ export interface Database {
           tier: 'free' | 'paid';
           max_saved_readings: number;
           total_unlocks: number;
+          tos_accepted_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -105,6 +106,7 @@ export interface Database {
           tier?: 'free' | 'paid';
           max_saved_readings?: number;
           total_unlocks?: number;
+          tos_accepted_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -115,6 +117,7 @@ export interface Database {
           tier?: 'free' | 'paid';
           max_saved_readings?: number;
           total_unlocks?: number;
+          tos_accepted_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
