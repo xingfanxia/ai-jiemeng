@@ -2,62 +2,26 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import fs from 'fs';
 import path from 'path';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 
 export const metadata: Metadata = {
   title: '隐私政策 - AI 周公解梦',
   description: '了解我们如何收集、使用和保护您的个人信息',
 };
 
-// Simple markdown to HTML converter for basic formatting
-// Note: Content is from our own static files, not user input
-function markdownToHtml(markdown: string): string {
-  let html = markdown
-    // Escape HTML first
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    // Restore HTML tags we want to keep (div, table, etc.)
-    .replace(/&lt;div/g, '<div')
-    .replace(/&lt;\/div&gt;/g, '</div>')
-    // Restore blockquote tags with dark-mode compatible styling
-    .replace(/&lt;blockquote/g, '<blockquote class="border-l-4 border-indigo-500 bg-indigo-500/10 dark:bg-indigo-500/20 p-4 my-4 rounded-r-lg"')
-    .replace(/&lt;\/blockquote&gt;/g, '</blockquote>')
-    .replace(/style="([^"]*)"/g, 'style="$1"')
-    // Headers
-    .replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold mt-6 mb-3 text-gray-800 dark:text-gray-200">$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold mt-8 mb-4 text-gray-900 dark:text-white border-b pb-2 border-gray-200 dark:border-gray-700">$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold mt-8 mb-4 text-gray-900 dark:text-white">$1</h1>')
-    // Bold
-    .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>')
-    // Italic
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    // Links
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-indigo-600 dark:text-indigo-400 hover:underline" target="_blank" rel="noopener noreferrer">$1</a>')
-    // Tables - basic support
-    .replace(/\|(.+)\|/g, (match) => {
-      const cells = match.split('|').filter(Boolean).map(cell => cell.trim());
-      if (cells.every(cell => cell.match(/^-+$/))) {
-        return ''; // Skip separator row
-      }
-      const isHeader = cells.some(cell => cell.includes('---'));
-      if (isHeader) return '';
-      return `<tr class="border-b border-gray-200 dark:border-gray-700">${cells.map(cell =>
-        `<td class="px-4 py-2 text-sm">${cell}</td>`
-      ).join('')}</tr>`;
-    })
-    // Horizontal rule
-    .replace(/^---$/gim, '<hr class="my-6 border-gray-200 dark:border-gray-700" />')
-    // Line breaks
-    .replace(/\n\n/g, '</p><p class="mb-4 text-gray-600 dark:text-gray-300 leading-relaxed">')
-    // List items
-    .replace(/^- (.*$)/gim, '<li class="ml-4 mb-1 text-gray-600 dark:text-gray-300">$1</li>')
-    // Numbered list items
-    .replace(/^\d+\. (.*$)/gim, '<li class="ml-4 mb-1 text-gray-600 dark:text-gray-300 list-decimal">$1</li>');
-
-  // Wrap in paragraph
-  html = `<p class="mb-4 text-gray-600 dark:text-gray-300 leading-relaxed">${html}</p>`;
-
-  return html;
+// Transform callout divs from inline styles to Tailwind classes
+function transformCallouts(markdown: string): string {
+  return markdown
+    .replace(/<div style="background: #e8f5e9; border: 2px solid #4caf50; padding: 20px; border-radius: 12px; margin: 20px 0;">/g,
+      '<div class="bg-green-50 dark:bg-green-900/20 border-2 border-green-500 dark:border-green-700 p-5 rounded-xl my-5">')
+    .replace(/<div style="background: #e3f2fd; border: 1px solid #2196f3; padding: 16px; border-radius: 8px; margin: 16px 0;">/g,
+      '<div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-500 dark:border-blue-700 p-4 rounded-lg my-4">')
+    .replace(/<div style="background: #fff8e1; border: 2px solid #ff9800; padding: 20px; border-radius: 12px; margin: 20px 0;">/g,
+      '<div class="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-500 dark:border-amber-700 p-5 rounded-xl my-5">')
+    .replace(/<div style="background: #fff3cd; border: 2px solid #ffc107; padding: 16px; border-radius: 8px; margin: 16px 0;">/g,
+      '<div class="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-500 dark:border-amber-700 p-4 rounded-lg my-4">');
 }
 
 export default async function PrivacyPolicyPage() {
@@ -72,7 +36,8 @@ export default async function PrivacyPolicyPage() {
     content = '# Privacy Policy\n\nContent loading error. Please try again later.';
   }
 
-  const htmlContent = markdownToHtml(content);
+  // Transform inline styles to Tailwind classes
+  const transformedContent = transformCallouts(content);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
@@ -101,14 +66,16 @@ export default async function PrivacyPolicyPage() {
         </div>
       </header>
 
-      {/* Content - Safe: rendered from our own static markdown files */}
+      {/* Content */}
       <main className="max-w-4xl mx-auto px-4 py-8">
-        <article
-          className="prose prose-gray dark:prose-invert max-w-none"
-          // SECURITY: This is safe because we're rendering our own static markdown files
-          // from the public/legal directory, not user-provided content
-          dangerouslySetInnerHTML={{ __html: htmlContent }}
-        />
+        <article className="prose prose-gray dark:prose-invert max-w-none">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeRaw]}
+          >
+            {transformedContent}
+          </ReactMarkdown>
+        </article>
       </main>
 
       {/* Footer */}
