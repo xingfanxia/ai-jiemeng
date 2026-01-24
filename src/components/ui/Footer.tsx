@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { MessageCircle } from 'lucide-react';
 
 interface AppLink {
   name: string;
@@ -83,6 +84,12 @@ export function Footer() {
           <p className="text-xs text-muted-foreground/50 max-w-md text-center">
             解梦结果仅供参考娱乐，请理性看待
           </p>
+
+          {/* WeChat Support */}
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground/70 mt-3">
+            <MessageCircle className="w-3.5 h-3.5 text-green-500" />
+            <span>客服微信: <span className="font-medium text-foreground">Panpanmao_001</span> 来加群</span>
+          </div>
         </div>
       </div>
     </footer>
