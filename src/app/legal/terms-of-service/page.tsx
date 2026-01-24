@@ -19,6 +19,9 @@ function markdownToHtml(markdown: string): string {
     // Restore HTML tags we want to keep (div, table, etc.)
     .replace(/&lt;div/g, '<div')
     .replace(/&lt;\/div&gt;/g, '</div>')
+    // Restore blockquote tags with dark-mode compatible styling
+    .replace(/&lt;blockquote/g, '<blockquote class="border-l-4 border-indigo-500 bg-indigo-500/10 dark:bg-indigo-500/20 p-4 my-4 rounded-r-lg"')
+    .replace(/&lt;\/blockquote&gt;/g, '</blockquote>')
     .replace(/style="([^"]*)"/g, 'style="$1"')
     // Headers
     .replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold mt-6 mb-3 text-gray-800 dark:text-gray-200">$1</h3>')

@@ -1,8 +1,8 @@
 # 服务条款 / Terms of Service
 
-**生效日期 / Effective Date**: [YYYY-MM-DD]
+**生效日期 / Effective Date**: 2026-01-24
 
-**最后更新 / Last Updated**: [YYYY-MM-DD]
+**最后更新 / Last Updated**: 2026-01-24
 
 ---
 
