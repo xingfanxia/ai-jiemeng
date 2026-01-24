@@ -70,7 +70,7 @@ export function Footer() {
             </div>
             <div className="text-center">
               <p className="text-sm font-medium bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">
-                Panpanmao科技 Panpanmao Technology
+                盘盘猫科技 Panpanmao Technology
               </p>
             </div>
           </div>
