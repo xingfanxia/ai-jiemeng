@@ -86,9 +86,12 @@ export function Footer() {
           </p>
 
           {/* WeChat Support */}
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground/70 mt-3">
-            <MessageCircle className="w-3.5 h-3.5 text-green-500" />
-            <span>客服微信: <span className="font-medium text-foreground">Panpanmao_001</span> 来加群</span>
+          <div className="flex flex-col items-center gap-1.5 text-xs text-muted-foreground/70 mt-3">
+            <div className="flex items-center gap-1.5">
+              <MessageCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
+              <span>💬 微信: <span className="font-medium text-foreground">Panpanmao_001</span></span>
+            </div>
+            <span className="text-muted-foreground/80">种子用户群招募中！反馈建议 & 抢先体验新功能</span>
           </div>
         </div>
       </div>
