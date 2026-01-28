@@ -210,6 +210,10 @@ export interface DeductCreditResult {
   success: boolean;
   remaining_credits: number;
   remaining_total?: number;
+  /**
+   * @deprecated Session 58: daily_credits was merged into total_credits.
+   * This field is kept for backward compatibility but will always be 0.
+   */
   remaining_daily?: number;
   error_message: string | null;
   referral_bonus_claimed?: boolean;

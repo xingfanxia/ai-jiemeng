@@ -94,8 +94,8 @@ export async function POST(request: NextRequest) {
 
     // Check if deduction was successful
     const result = deductResult?.[0];
-    // Calculate combined credits (total + daily)
-    const remainingCredits = (result?.remaining_total || 0) + (result?.remaining_daily || 0);
+    // Session 58: Unified credit pool - daily_credits merged into total_credits
+    const remainingCredits = result?.remaining_total || 0;
 
     if (!result?.success) {
       return new Response(

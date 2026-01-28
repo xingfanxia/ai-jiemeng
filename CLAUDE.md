@@ -129,6 +129,14 @@ npm run build
 npm run lint
 ```
 
+## Recent Changes
+
+### Session 58: Unified Credit Pool (2026-01-28)
+- Adopted unified credit pool pattern: `daily_credits` merged into `total_credits`
+- Removed dual-pool calculation (`remaining_total + remaining_daily`) in guidance API
+- Now uses single `remaining_total` value
+- Added `@deprecated` JSDoc to `remaining_daily` in DeductCreditResult type
+
 ## Related Projects
 
 - **bazi-app**: Shares auth, credits, and cost logging infrastructure
